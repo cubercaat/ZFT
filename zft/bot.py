@@ -147,7 +147,8 @@ class Bot:
         import hmac
         want = os.environ.get("OWNER_CLAIM_CODE", "")
         if self.s.owner_id:
-            return self.tg.send_message(uid, "Bu botning egasi allaqachon belgilangan.")
+            return self.tg.send_message(uid, "✅ Siz bot egasisiz. Buyruqlar: /admin" if uid == self.s.owner_id
+                                        else "Bu botning egasi allaqachon belgilangan.")
         if not want or not code or not hmac.compare_digest(code, want):
             self.db.audit("bot", "owner_claim_failed", {"tg_id": uid})
             return self.tg.send_message(uid, "Kod noto'g'ri.")
@@ -160,6 +161,8 @@ class Bot:
     def cmd_start(self, frm: dict, payload: str) -> None:
         uid = frm["id"]
         source, referrer = "direct", None
+        if payload.startswith("egasi_"):  # sozlash oynasidagi "botni ochish" havolasi
+            return self.cmd_claim(uid, payload[6:])
         duel_id = None
         if payload and PAYLOAD_RE.match(payload) and payload.startswith("duel_") and payload[5:].isdigit():
             duel_id = int(payload[5:])

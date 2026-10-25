@@ -2,7 +2,17 @@
 
 [![Testlar](https://github.com/cubercaat/ZFT/actions/workflows/tests.yml/badge.svg)](https://github.com/cubercaat/ZFT/actions/workflows/tests.yml)
 
-**Holat:** kod tayyor, serverga o'rnatish kutilmoqda (pastda «O'rnatish» bo'limi — bitta buyruq).
+**Holat:** kod tayyor. Hozir demo rejimda sinab ko'rish mumkin; doimiy ishlashi uchun server kerak (pastda «O'rnatish» — bitta buyruq).
+
+## Demo — 2 daqiqada, serversiz
+
+**1-usul: brauzerda (hech narsa o'rnatmasdan).** [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/cubercaat/ZFT?quickstart=1)
+
+Tugmani bosing → **Create codespace** → 2–3 daqiqa kuting → «ZFT panel» oynasi o'zi ochiladi (ochilmasa: pastdagi **Ports** → 8090 → 🌐). Bot tokenini qo'yasiz → **Telegram'da botni ochish** → Start. Birinchi video bir necha daqiqada Telegram'ga keladi.
+
+**2-usul: Windows kompyuterda.** Repo sahifasida **Code → Download ZIP** → ochib, **`ZFT-demo.bat`** ni ikki marta bosing. Python va ffmpeg bo'lmasa o'zi o'rnatadi (keyin faylni yana bir marta oching). Brauzerda sozlash oynasi ochiladi — tokenni qo'yasiz. Mac/Linux: `bash deploy/demo.sh`.
+
+Demo cheklovlari: oyna yoki kompyuter yopilsa bot to'xtaydi (Codespaces 30 daqiqa harakatsizlikdan keyin uxlaydi, oyiga ≈60 soat bepul). Instagram/TikTok'ga joylash uchun ochiq manzil kerak — u faqat serverda ishlaydi. Telegram bot, video yasash, panel, Jarvislar va hisobotlar demoda to'liq ishlaydi.
 
 ZFT — Chorraha (chorrahaa.uz, Telegram bot, PRAVA QUIZ guruhi) uchun ishlaydigan 8 ta AI Jarvisdan iborat jamoa (kerak bo'lsa, Bosh direktor yangi Jarvisni ishga oladi). U odam olib keladi, professional AI video-reklama yasaydi, Instagram, TikTok va Telegram'ga o'zi joylaydi, pulni nazorat qiladi va sizga hisobot beradi. Siz faqat Bosh direktor bilan gaplashasiz: panel yoki botga oddiy matn yozasiz, kerak bo'lsa videoni tasdiqlaysiz.
 

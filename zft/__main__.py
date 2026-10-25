@@ -105,9 +105,11 @@ def main(argv: list[str]) -> int:
         print(f"✅ {n} ta savol import qilindi → {s.questions_path}")
         return 0
     if cmd == "run":
-        if not s.bot_token:
-            print("❌ .env da BOT_TOKEN yo'q. Avval .env.example dan .env yarating.")
-            return 2
+        if not s.bot_token:  # birinchi marta: brauzerda sozlash oynasi
+            from .setup_web import run_setup
+            if not run_setup(ROOT / ".env", port=int(os.environ.get("PANEL_PORT", "8090"))):
+                return 1
+            s = Settings.load()
         if not s.bot_username:  # BOT_USERNAME yozilmagan bo'lsa, Telegram'dan o'zi oladi
             from .telegram_api import TelegramAPI, TelegramError
             try:

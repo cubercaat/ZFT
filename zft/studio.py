@@ -196,7 +196,7 @@ class Studio:
 
             # video qismlarini birlashtirish
             lst = tmp / "list.txt"
-            lst.write_text("".join(f"file '{p}'\n" for p in segs))
+            lst.write_text("".join(f"file '{Path(p).as_posix()}'\n" for p in segs), encoding="utf-8")
             vid = tmp / "video.mp4"
             run_ffmpeg(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(vid)])
             total = sum(durs)

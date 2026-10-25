@@ -34,11 +34,15 @@ FONT_CANDIDATES_BOLD = [
     "assets/fonts/Montserrat-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+    "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/segoeuib.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf", "/Library/Fonts/Arial Bold.ttf",
 ]
 FONT_CANDIDATES_REG = [
     "assets/fonts/Montserrat-Medium.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    "C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/segoeui.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf", "/Library/Fonts/Arial.ttf",
 ]
 
 
@@ -256,12 +260,12 @@ class VideoMaker:
             scenes += [(self.frame_reveal(q, plan.reveal_line), reveal_d), (self.frame_cta(plan.cta), cta_d)]
 
             concat = tmp / "list.txt"
-            with concat.open("w") as fh:
+            with concat.open("w", encoding="utf-8") as fh:
                 for i, (im, dur) in enumerate(scenes):
                     p = tmp / f"s{i:02d}.png"
                     im.save(p, optimize=False)
-                    fh.write(f"file '{p}'\nduration {dur:.3f}\n")
-                fh.write(f"file '{tmp / f's{len(scenes) - 1:02d}.png'}'\n")
+                    fh.write(f"file '{Path(p).as_posix()}'\nduration {dur:.3f}\n")
+                fh.write(f"file '{(tmp / f's{len(scenes) - 1:02d}.png').as_posix()}'\n")
             total = sum(d for _, d in scenes)
 
             # 3) audio trek

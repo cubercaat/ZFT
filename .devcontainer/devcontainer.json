@@ -1,0 +1,16 @@
+{
+  "name": "ZFT demo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {}
+  },
+  "postCreateCommand": "pip install -q -r requirements.txt",
+  "postAttachCommand": "bash deploy/demo.sh",
+  "forwardPorts": [8090],
+  "portsAttributes": {
+    "8090": { "label": "ZFT panel", "onAutoForward": "openBrowser" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] }
+  }
+}
