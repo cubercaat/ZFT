@@ -87,13 +87,13 @@ ZFT — Chorraha (chorrahaa.uz, Telegram bot, PRAVA QUIZ guruhi) uchun ishlaydig
 2. Serverga kiring (`ssh root@SERVER_IP`) va bitta buyruqni yozing:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/cubercaat/zft/main/deploy/setup.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/cubercaat/ZFT/main/deploy/setup.sh | sudo bash
 ```
 
 Repo yopiq (private) bo'lsa: GitHub → Settings → Developer settings → **Fine-grained token** → faqat `zft` repo, *Contents: Read* → token bilan:
 
 ```bash
-curl -fsSL -H "Authorization: token TOKEN" https://raw.githubusercontent.com/cubercaat/zft/main/deploy/setup.sh | sudo GH_TOKEN=TOKEN bash
+curl -fsSL -H "Authorization: token TOKEN" https://raw.githubusercontent.com/cubercaat/ZFT/main/deploy/setup.sh | sudo GH_TOKEN=TOKEN bash
 ```
 
 3. O'rnatuvchi 3 narsani so'raydi (kalitlar faqat serverda saqlanadi, chatga yozmang):

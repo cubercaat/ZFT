@@ -2,15 +2,15 @@
 # ZFT — bitta buyruq bilan o'rnatish va yangilash (Ubuntu 22.04 / 24.04).
 #
 # Ochiq repo:
-#   curl -fsSL https://raw.githubusercontent.com/cubercaat/zft/main/deploy/setup.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/cubercaat/ZFT/main/deploy/setup.sh | sudo bash
 # Yopiq (private) repo — GitHub'dan "fine-grained token" (faqat shu repo, Contents: Read) oling:
-#   curl -fsSL -H "Authorization: token TOKEN" https://raw.githubusercontent.com/cubercaat/zft/main/deploy/setup.sh | sudo GH_TOKEN=TOKEN bash
+#   curl -fsSL -H "Authorization: token TOKEN" https://raw.githubusercontent.com/cubercaat/ZFT/main/deploy/setup.sh | sudo GH_TOKEN=TOKEN bash
 #
 # Domen kerak emas: server IP manzilidan bepul HTTPS manzil yasaladi (masalan 1-2-3-4.sslip.io).
 # Qayta ishga tushirilsa — kodni yangilaydi, .env dagi sozlamalarga tegmaydi.
 set -euo pipefail
 
-REPO="${ZFT_REPO:-cubercaat/zft}"
+REPO="${ZFT_REPO:-cubercaat/ZFT}"
 BRANCH="${ZFT_BRANCH:-main}"
 APP_DIR=/opt/zft
 ENV_FILE="$APP_DIR/.env"
