@@ -1,10 +1,7 @@
 {
   "name": "ZFT demo",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
-  "features": {
-    "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {}
-  },
-  "postCreateCommand": "pip install -q -r requirements.txt",
+  "postCreateCommand": "sudo apt-get update -q && sudo apt-get install -y -q ffmpeg fonts-dejavu-core && pip install -q -r requirements.txt",
   "postAttachCommand": "bash deploy/demo.sh",
   "forwardPorts": [8090],
   "portsAttributes": {
