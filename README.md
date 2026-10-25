@@ -1,5 +1,9 @@
 # ZFT — Chorraha uchun AI marketing markazi
 
+[![Testlar](https://github.com/cubercaat/ZFT/actions/workflows/tests.yml/badge.svg)](https://github.com/cubercaat/ZFT/actions/workflows/tests.yml)
+
+**Holat:** kod tayyor, serverga o'rnatish kutilmoqda (pastda «O'rnatish» bo'limi — bitta buyruq).
+
 ZFT — Chorraha (chorrahaa.uz, Telegram bot, PRAVA QUIZ guruhi) uchun ishlaydigan 8 ta AI Jarvisdan iborat jamoa (kerak bo'lsa, Bosh direktor yangi Jarvisni ishga oladi). U odam olib keladi, professional AI video-reklama yasaydi, Instagram, TikTok va Telegram'ga o'zi joylaydi, pulni nazorat qiladi va sizga hisobot beradi. Siz faqat Bosh direktor bilan gaplashasiz: panel yoki botga oddiy matn yozasiz, kerak bo'lsa videoni tasdiqlaysiz.
 
 ## Jarvislar jamoasi
