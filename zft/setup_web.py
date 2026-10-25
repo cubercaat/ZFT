@@ -84,7 +84,7 @@ PAGE = """<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name=
 <style>
 :root{--bg:#eef1f5;--card:#fff;--ink:#13203a;--muted:#5a6479;--line:#d6dce6;--sign:#f5a800;--good:#128a5a;--bad:#d23c3c;--sunk:#e5e9f0}
 @media (prefers-color-scheme:dark){:root{--bg:#0b1222;--card:#121b2f;--ink:#e8edf6;--muted:#98a3b9;--line:#24314b;--sign:#ffb81c;--good:#35c088;--bad:#f06a6a;--sunk:#1a253c;color-scheme:dark}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Onest,system-ui,sans-serif;padding:6vh 16px}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Onest,system-ui,sans-serif;padding:6vh 16px}
 main{max-width:520px;margin:0 auto;animation:rise .7s cubic-bezier(.22,1,.36,1) both}@keyframes rise{from{opacity:0;transform:translateY(14px)}}
 .brand{display:flex;gap:14px;align-items:center;margin-bottom:22px}
 .d{width:40px;height:40px;background:var(--sign);transform:rotate(45deg);border-radius:8px;display:grid;place-items:center;box-shadow:inset 0 0 0 3px #231900,inset 0 0 0 5px var(--sign)}
