@@ -1,0 +1,45 @@
+{
+  "_izoh": "NAMUNA. Bu 5 ta savol faqat tizimni sinash uchun. Saytdagi 1276 ta rasmiy savolni shu formatda eksport qilib, bu faylni almashtiring (scripts: tools/import_questions.py). correct = to'g'ri variant indeksi (0 dan boshlanadi). image ixtiyoriy: data/images/ ichidagi fayl.",
+  "questions": [
+    {
+      "id": "namuna-1",
+      "topic": "svetofor",
+      "question": "Svetoforda qizil chiroq yonib turibdi. Haydovchi nima qilishi kerak?",
+      "options": ["To'xtash chizig'i oldida to'xtashi", "Ehtiyotkorlik bilan o'tib ketishi", "Signal berib o'tishi"],
+      "correct": 0,
+      "explanation": "Qizil signal harakatni taqiqlaydi."
+    },
+    {
+      "id": "namuna-2",
+      "topic": "piyodalar",
+      "question": "Tartibga solinmagan piyodalar o'tish joyida yo'lni kesib o'tayotgan piyodaga nisbatan haydovchi nima qiladi?",
+      "options": ["Tezlikni oshiradi", "Yo'l beradi", "Ovozli signal beradi"],
+      "correct": 1,
+      "explanation": "Piyodalar o'tish joyida piyodaga yo'l berish shart."
+    },
+    {
+      "id": "namuna-3",
+      "topic": "xavfsizlik",
+      "question": "Xavfsizlik kamari qachon taqilishi kerak?",
+      "options": ["Faqat shahar tashqarisida", "Faqat tunda", "Harakat davomida doim"],
+      "correct": 2,
+      "explanation": "Kamar harakat davomida taqib yuriladi."
+    },
+    {
+      "id": "namuna-4",
+      "topic": "svetofor",
+      "question": "Sariq chiroq miltillab turgan chorrahada nimaga amal qilinadi?",
+      "options": ["Yo'l belgilari va chorrahadan o'tish qoidalariga", "Hech narsaga, o'tish erkin", "Faqat yashil chiroqni kutish kerak"],
+      "correct": 0,
+      "explanation": "Miltillovchi sariq signal chorraha tartibga solinmaganini bildiradi."
+    },
+    {
+      "id": "namuna-5",
+      "topic": "umumiy",
+      "question": "Haydovchi rul boshqaruvi vaqtida qo'lda telefon ushlab gaplashishi mumkinmi?",
+      "options": ["Ha, qisqa vaqt", "Yo'q, mumkin emas", "Faqat tirbandlikda"],
+      "correct": 1,
+      "explanation": "Qo'lda telefon ushlab gaplashish taqiqlangan."
+    }
+  ]
+}

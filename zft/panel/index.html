@@ -1,0 +1,1344 @@
+<title>ZFT Panel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: chapda "tungi yo'l" — harakatlanuvchi chiziqli menyu, har Jarvisning o'z rangi (svetofor va yo'l belgilari olamidan);
+   o'ngda kunduzgi tuman rangidagi sahifa: yuqorida xulosa, pastda tafsilot. Animatsiya: sahifa ochilganda bloklar navbat bilan,
+   raqamlar sanaladi, grafik ustunlari o'sadi, ishlayotgan Jarvis faralar kabi yonadi. */
+:root {
+  --bg: #eef1f5;          /* tongi tuman */
+  --surface: #ffffff;
+  --sunk: #e5e9f0;
+  --ink: #13203a;         /* tungi asfalt siyohi */
+  --muted: #5a6479;
+  --line: #d6dce6;
+  --sign: #f5a800;        /* fara sarig'i — asosiy urg'u */
+  --sign-ink: #231900;
+  --good: #128a5a; --warn: #c27a0c; --bad: #d23c3c; --info: #2f62c9;
+  --side: #0e1729; --side-2: #15213a; --side-ink: #e7ebf3; --side-muted: #8a95ab;
+  --a-direktor: #f5a800; --a-marketolog: #7a5ce0; --a-smm: #e0507a; --a-moliya: #12936a;
+  --a-media: #2f7de1; --a-studiya: #b94ad0; --a-nashr: #0e9fae; --a-hisobot: #6a7a9b; --a-ega: #13203a;
+  --glow: 0 10px 30px -12px rgba(19, 32, 58, .28);
+  --font-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --font-body: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-data: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1222; --surface: #121b2f; --sunk: #1a253c; --ink: #e8edf6; --muted: #98a3b9; --line: #24314b;
+    --sign: #ffb81c; --sign-ink: #1c1400; --good: #35c088; --warn: #f0a83a; --bad: #f06a6a; --info: #75a3f5;
+    --side: #070d1a; --side-2: #0e1729; --side-ink: #e7ebf3; --side-muted: #7f8aa1;
+    --a-direktor: #ffb81c; --a-marketolog: #a08bff; --a-smm: #ff7aa0; --a-moliya: #35c088;
+    --a-media: #6aa7ff; --a-studiya: #db7cf0; --a-nashr: #3fd0dc; --a-hisobot: #a3b0cc; --a-ega: #e8edf6;
+    --glow: 0 12px 34px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1222; --surface: #121b2f; --sunk: #1a253c; --ink: #e8edf6; --muted: #98a3b9; --line: #24314b;
+  --sign: #ffb81c; --sign-ink: #1c1400; --good: #35c088; --warn: #f0a83a; --bad: #f06a6a; --info: #75a3f5;
+  --side: #070d1a; --side-2: #0e1729; --side-ink: #e7ebf3; --side-muted: #7f8aa1;
+  --a-direktor: #ffb81c; --a-marketolog: #a08bff; --a-smm: #ff7aa0; --a-moliya: #35c088;
+  --a-media: #6aa7ff; --a-studiya: #db7cf0; --a-nashr: #3fd0dc; --a-hisobot: #a3b0cc; --a-ega: #e8edf6;
+  --glow: 0 12px 34px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -.01em; }
+h2 { font-size: 19px; }
+h3 { font-size: 15px; font-weight: 600; color: var(--ink); }
+button, input, select, textarea { font: inherit; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--sign) 80%, transparent); outline-offset: 2px; }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+::selection { background: color-mix(in srgb, var(--sign) 45%, transparent); }
+
+/* ---------- qobiq ---------- */
+.shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100%; }
+
+/* chap menyu: tungi yo'l, o'ng chetida harakatlanuvchi yo'l chizig'i */
+aside.side { background: radial-gradient(120% 60% at 0% 0%, var(--side-2), var(--side) 60%); color: var(--side-ink);
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; scrollbar-width: thin;
+  padding-block: 20px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: 18px;
+  display: flex; flex-direction: column; gap: 16px; isolation: isolate; }
+aside.side::after { content: ""; position: absolute; top: 0; bottom: 0; right: 6px; width: 3px; z-index: -1; opacity: .55;
+  background: repeating-linear-gradient(180deg, var(--sign) 0 26px, transparent 26px 52px); background-size: 3px 52px;
+  animation: lane 2.4s linear infinite; }
+@keyframes lane { to { background-position: 0 52px; } }
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 6px; }
+.diamond { width: 36px; height: 36px; background: var(--sign); transform: rotate(45deg); border-radius: 7px; display: grid; place-items: center;
+  box-shadow: inset 0 0 0 3px var(--sign-ink), inset 0 0 0 5px var(--sign), 0 0 24px -4px color-mix(in srgb, var(--sign) 70%, transparent); flex: none;
+  animation: signIn .9s var(--ease) both; }
+@keyframes signIn { from { transform: rotate(-135deg) scale(.4); opacity: 0; } }
+.diamond span { transform: rotate(-45deg); font-family: var(--font-display); font-weight: 700; color: var(--sign-ink); font-size: 15px; }
+.brand h1 { font-size: 22px; line-height: 1; color: var(--side-ink); letter-spacing: .02em; }
+.brand small { display: block; color: var(--side-muted); font-size: 12px; margin-top: 4px; }
+
+.nav { display: grid; gap: 1px; }
+.nav .group { font-size: 11.5px; letter-spacing: .04em; color: var(--side-muted); padding: 14px 12px 5px; }
+.nav a { --c: var(--sign); position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 10px;
+  color: color-mix(in srgb, var(--side-ink) 86%, transparent); text-decoration: none; font-weight: 500;
+  transition: background .3s var(--ease), color .3s, transform .3s var(--ease); }
+.nav a:hover { background: color-mix(in srgb, var(--side-ink) 7%, transparent); color: var(--side-ink); transform: translateX(3px); }
+.nav a[aria-current="page"] { color: var(--side-ink); font-weight: 600;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 6%, transparent)); }
+.nav a[aria-current="page"]::before { content: ""; position: absolute; left: -14px; top: 7px; bottom: 7px; width: 4px; border-radius: 0 4px 4px 0;
+  background: var(--c); box-shadow: 0 0 14px var(--c); animation: grow .5s var(--ease) both; }
+@keyframes grow { from { transform: scaleY(0); } }
+.nav .ico { width: 22px; height: 22px; flex: none; border-radius: 5px; transform: rotate(45deg); display: grid; place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--c) 70%, var(--side-muted)); transition: transform .45s var(--ease), background .3s; }
+.nav a:hover .ico { transform: rotate(135deg); }
+.nav .ico b { transform: rotate(-45deg); font-family: var(--font-display); font-size: 10px; font-weight: 600; color: var(--c); transition: transform .45s var(--ease); }
+.nav a:hover .ico b { transform: rotate(-135deg); }
+.nav a[aria-current="page"] .ico { background: var(--c); border-color: var(--c); }
+.nav a[aria-current="page"] .ico b { color: var(--side); }
+.nav .lbl { flex: 1; min-width: 0; }
+.nav .live, .dot.on { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--sign)); flex: none; }
+.nav .live::after, .dot.on::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--c, var(--sign));
+  animation: ripple 1.6s var(--ease) infinite; }
+@keyframes ripple { from { transform: scale(.4); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+.side-foot { margin-top: auto; display: grid; gap: 6px; font-size: 12px; color: var(--side-muted); padding: 10px 10px 0;
+  border-top: 1px solid color-mix(in srgb, var(--side-ink) 10%, transparent); }
+
+main.page { min-width: 0; padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.page-inner { max-width: 1140px; margin: 0 auto; }
+.stripe { height: 4px; margin: 0 0 22px; border-radius: 0 0 4px 4px; opacity: .9;
+  background: repeating-linear-gradient(90deg, var(--sign) 0 40px, transparent 40px 80px); background-size: 80px 4px; animation: road 3s linear infinite; }
+@keyframes road { to { background-position: -80px 0; } }
+
+/* sahifa sarlavhasi: Jarvis rangidagi yo'l belgisi */
+.page-head { --c: var(--sign); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
+.page-head .av { width: 54px; height: 54px; border-radius: 12px; transform: rotate(45deg); display: grid; place-items: center; flex: none;
+  background: color-mix(in srgb, var(--c) 16%, var(--surface)); border: 2px solid color-mix(in srgb, var(--c) 55%, transparent);
+  animation: signIn .8s var(--ease) both; }
+.page-head .av.on { background: var(--c); border-color: var(--c); box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 18%, transparent), 0 0 30px -4px var(--c); }
+.page-head .av b { transform: rotate(-45deg); font-family: var(--font-display); font-size: 18px; color: var(--c); }
+.page-head .av.on b { color: var(--surface); }
+.page-head h2 { font-size: clamp(24px, 3.2vw, 34px); line-height: 1.1; animation: rise .7s var(--ease) .05s both; }
+.page-head .role { color: var(--muted); font-size: 14.5px; margin-top: 4px; max-width: 62ch; animation: rise .7s var(--ease) .12s both; }
+.page-head .right { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.page-head .right .chip { white-space: normal; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+.chip { --c: var(--sign); display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 13px;
+  background: var(--surface); border: 1px solid var(--line); white-space: nowrap; box-shadow: var(--glow); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.good { background: var(--good); box-shadow: 0 0 10px var(--good); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+.demo { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; border-radius: 12px; padding: 11px 15px; margin-bottom: 14px; font-size: 14px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--sign) 20%, var(--surface)), color-mix(in srgb, var(--sign) 6%, var(--surface)));
+  border: 1px solid color-mix(in srgb, var(--sign) 45%, var(--line)); }
+
+/* ---------- sahifa ochilganda: bloklar navbat bilan chiqadi ---------- */
+.enter > * { animation: rise .65s var(--ease) both; }
+.enter > *:nth-child(2) { animation-delay: .06s; } .enter > *:nth-child(3) { animation-delay: .12s; }
+.enter > *:nth-child(4) { animation-delay: .18s; } .enter > *:nth-child(n+5) { animation-delay: .24s; }
+.enter .grid > *, .enter .col > * { animation: rise .7s var(--ease) both; }
+.enter .grid > *:nth-child(2), .enter .col > *:nth-child(2) { animation-delay: .1s; }
+.enter .col > *:nth-child(3) { animation-delay: .18s; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.grid.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.col { display: grid; gap: 20px; min-width: 0; }
+.stack { display: grid; gap: 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0;
+  box-shadow: var(--glow); transition: box-shadow .4s var(--ease), border-color .4s; }
+.card:hover { border-color: color-mix(in srgb, var(--ink) 18%, var(--line)); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.card h3 { display: flex; align-items: center; gap: 9px; }
+.card h3::before { content: ""; width: 9px; height: 9px; transform: rotate(45deg); border-radius: 2px; background: var(--sign); flex: none; }
+
+/* KPI: asboblar paneli — har ko'rsatkich o'z rangida, pastida spidometr chizig'i */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.kpi { --c: var(--info); position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 16px 18px 18px; display: grid; gap: 4px; box-shadow: var(--glow); transition: transform .4s var(--ease); }
+.kpi:nth-child(4n+1) { --c: var(--sign); } .kpi:nth-child(4n+2) { --c: var(--a-media); } .kpi:nth-child(4n+3) { --c: var(--a-moliya); } .kpi:nth-child(4n) { --c: var(--a-marketolog); }
+.kpi::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 10%, transparent)); transform-origin: left; animation: sweep 1.1s var(--ease) .2s both; }
+@keyframes sweep { from { transform: scaleX(0); } }
+.kpi::before { content: ""; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%); }
+.kpi:hover { transform: translateY(-3px); }
+.kpi .label { font-size: 13px; color: var(--muted); position: relative; }
+.kpi .value { font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 30px); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums;
+  position: relative; overflow-wrap: anywhere; }
+.kpi .sub { font-size: 13px; color: var(--muted); position: relative; }
+
+/* Jamoa: tashkiliy daraxt, har Jarvis o'z rangida */
+.team { display: grid; gap: 14px; }
+.team .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.team .row4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.team > * { animation: rise .7s var(--ease) both; }
+.team > *:nth-child(3) { animation-delay: .1s; } .team > *:nth-child(5) { animation-delay: .2s; } .team > *:nth-child(7) { animation-delay: .3s; }
+.agent { --c: var(--sign); position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 16px; display: grid; gap: 9px; min-width: 0; text-decoration: none; color: inherit; box-shadow: var(--glow);
+  transition: transform .45s var(--ease), border-color .3s, box-shadow .45s var(--ease); }
+.agent::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .45s;
+  background: radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 60%); }
+.agent:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--c) 55%, var(--line)); }
+.agent:hover::before, .agent.on::before { opacity: 1; }
+.agent.on { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent), 0 16px 40px -18px var(--c); }
+.agent .top { display: flex; gap: 12px; align-items: center; position: relative; }
+.agent .av { width: 34px; height: 34px; flex: none; border-radius: 8px; transform: rotate(45deg); display: grid; place-items: center;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); border: 2px solid color-mix(in srgb, var(--c) 60%, transparent);
+  transition: transform .6s var(--ease); }
+.agent:hover .av { transform: rotate(225deg); }
+.agent.on .av { background: var(--c); border-color: var(--c); }
+.agent .av b { transform: rotate(-45deg); font-family: var(--font-display); font-size: 13px; color: var(--c); transition: transform .6s var(--ease); }
+.agent:hover .av b { transform: rotate(-225deg); }
+.agent.on .av b { color: var(--surface); }
+.agent .nm { font-family: var(--font-display); font-weight: 600; font-size: 15.5px; line-height: 1.2; }
+.agent .rl { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.agent .st { font-size: 13px; display: flex; align-items: center; gap: 8px; position: relative; }
+.agent .meta { font-size: 12px; color: var(--muted); position: relative; }
+.link-line { height: 16px; margin: -8px auto; width: 2px; background: repeating-linear-gradient(180deg, var(--line) 0 4px, transparent 4px 8px); }
+
+/* suhbat: har Jarvis o'z rangidagi ism va pufak qirrasi */
+.feed { display: grid; gap: 12px; max-height: 500px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; }
+.msg { --c: var(--muted); display: grid; gap: 4px; max-width: 86%; }
+.msg .who { font-size: 12px; color: var(--muted); }
+.msg .who b { color: var(--c); font-weight: 600; }
+.msg .bubble { background: var(--sunk); border-radius: 4px 14px 14px 14px; padding: 10px 13px; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere;
+  border-left: 3px solid var(--c); }
+.msg.owner { justify-self: end; }
+.msg.owner .who { text-align: right; }
+.msg.owner .bubble { background: color-mix(in srgb, var(--sign) 22%, var(--surface)); border-radius: 14px 4px 14px 14px; border-left: 0; border-right: 3px solid var(--sign); }
+.msg.to-owner .bubble { background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, var(--line)); }
+.chat { display: flex; gap: 8px; margin-top: 14px; }
+.chat input { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--sunk); color: var(--ink);
+  transition: border-color .3s, background .3s, box-shadow .3s; }
+.chat input:focus { outline: none; background: var(--surface); border-color: var(--sign); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sign) 22%, transparent); }
+
+.review { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 18px; }
+.phone { aspect-ratio: 9 / 16; width: 100%; max-width: 100%; background: #0b0e16; border-radius: 22px; overflow: hidden;
+  border: 5px solid var(--ink); box-shadow: 0 24px 50px -24px rgba(0, 0, 0, .6); }
+.phone video, .phone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.status, .tier { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.st-pending { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.st-approved { background: color-mix(in srgb, var(--info) 16%, transparent); color: var(--info); }
+.st-published, .st-done { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+.st-rejected, .st-failed { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.st-draft, .st-cancelled, .st-dry { background: var(--sunk); color: var(--muted); }
+.tier { background: var(--sunk); color: var(--ink); }
+.tier.cinematic { background: color-mix(in srgb, var(--a-studiya) 18%, transparent); color: var(--a-studiya); }
+.tier.light { background: color-mix(in srgb, var(--info) 16%, transparent); color: var(--info); }
+.verdict-yaxshi { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+.verdict-kam { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.verdict-o { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.hook { font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.25; margin: 8px 0 10px; }
+.caption { white-space: pre-wrap; background: var(--sunk); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.55; }
+.tags { color: var(--a-media); font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+.reason { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.btn { position: relative; overflow: hidden; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 9px 16px;
+  border-radius: 11px; font-weight: 600; cursor: pointer; transition: transform .25s var(--ease), border-color .25s, box-shadow .3s, background .25s; }
+.btn:hover { border-color: color-mix(in srgb, var(--ink) 45%, var(--line)); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px) scale(.98); }
+.btn.primary { background: var(--sign); color: var(--sign-ink); border-color: transparent;
+  box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--sign) 90%, transparent); }
+.btn.primary::after { content: ""; position: absolute; inset: 0; transform: translateX(-120%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%); transition: transform .8s var(--ease); }
+.btn.primary:hover::after { transform: translateX(120%); }
+.btn.primary:hover { box-shadow: 0 12px 26px -10px color-mix(in srgb, var(--sign) 95%, transparent); }
+.btn.danger { color: var(--bad); }
+.btn.danger:hover { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 7%, var(--surface)); }
+.btn[disabled] { opacity: .5; cursor: default; transform: none; }
+.empty { color: var(--muted); padding: 20px 16px; text-align: center; border-radius: 12px; font-size: 14px;
+  background: repeating-linear-gradient(135deg, var(--sunk) 0 10px, color-mix(in srgb, var(--sunk) 55%, var(--surface)) 10px 20px); }
+
+/* kun jadvali: yo'l bo'ylab bekatlar */
+.day { list-style: none; margin: 6px 0 0; padding: 0; display: grid; }
+.day li { display: grid; grid-template-columns: 50px 18px minmax(0, 1fr); align-items: center; gap: 12px; padding: 8px 0; font-size: 14px; position: relative;
+  animation: rise .6s var(--ease) both; }
+.day li:nth-child(2) { animation-delay: .04s; } .day li:nth-child(3) { animation-delay: .08s; } .day li:nth-child(4) { animation-delay: .12s; }
+.day li:nth-child(5) { animation-delay: .16s; } .day li:nth-child(6) { animation-delay: .2s; } .day li:nth-child(n+7) { animation-delay: .24s; }
+.day li + li::before { content: ""; position: absolute; left: 70px; top: -10px; height: 20px; border-left: 2px dashed var(--line); }
+.day time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; font-weight: 500; }
+.day i { width: 12px; height: 12px; transform: rotate(45deg); border-radius: 3px; border: 2px solid var(--muted); background: var(--surface); justify-self: center; }
+.day .k-video i { border-color: var(--a-studiya); background: var(--a-studiya); }
+.day .k-pub i { border-color: var(--a-nashr); background: var(--a-nashr); }
+.day .k-quiz i { border-color: var(--sign); }
+.day .k-report i { border-color: var(--a-hisobot); }
+.day .past { opacity: .45; }
+.day .nowline { grid-template-columns: 50px minmax(0, 1fr); color: var(--bad); font-size: 12px; font-weight: 700; padding: 2px 0; }
+.day .nowline span { height: 2px; background: linear-gradient(90deg, var(--bad), transparent); position: relative; }
+.day .nowline span::before { content: ""; position: absolute; left: 14px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--bad);
+  box-shadow: 0 0 0 0 var(--bad); animation: beacon 1.8s ease-out infinite; }
+@keyframes beacon { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+
+.meter { height: 10px; background: var(--sunk); border-radius: 6px; overflow: hidden; margin: 10px 0 8px; }
+.meter > div { height: 100%; background: var(--good); border-radius: 6px; transform-origin: left; animation: sweep 1.3s var(--ease) both;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28)); }
+.rows { display: grid; gap: 2px; }
+.row { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 14px; padding: 7px 8px; border-radius: 8px; transition: background .25s; }
+.row:hover { background: var(--sunk); }
+.row > span:first-child { color: var(--muted); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 0 10px; }
+.toggle { position: relative; width: 52px; height: 30px; flex: none; }
+.toggle input { opacity: 0; width: 100%; height: 100%; position: absolute; margin: 0; cursor: pointer; z-index: 1; }
+.toggle span { position: absolute; inset: 0; border-radius: 15px; background: var(--sunk); border: 1px solid var(--line); pointer-events: none; transition: background .35s var(--ease); }
+.toggle span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted);
+  transition: transform .45s var(--ease), background .3s; }
+.toggle input:checked + span { background: var(--good); border-color: var(--good); }
+.toggle input:checked + span::after { transform: translateX(22px); background: #fff; }
+.toggle input:focus-visible + span { outline: 3px solid var(--sign); outline-offset: 2px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12.5px; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr { transition: background .25s; }
+tbody tr:hover { background: var(--sunk); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl { overflow-x: auto; }
+.share { display: flex; align-items: center; gap: 10px; min-width: 120px; }
+.share .track { flex: 1; height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
+.share .track div { height: 100%; background: linear-gradient(90deg, var(--a-media), var(--sign)); border-radius: 4px; transform-origin: left; animation: sweep 1.1s var(--ease) both; }
+form.inline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#parForm input, #parForm select, #goalForm input, #goalForm select, #hireForm input, #hireForm select, form.inline input, form.inline select, .login input, textarea {
+  padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--sunk); color: var(--ink); min-width: 0;
+  transition: border-color .3s, background .3s, box-shadow .3s; }
+form.inline input, form.inline select { flex: 1 1 140px; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--sign) !important; background: var(--surface) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--sign) 22%, transparent); }
+textarea { width: 100%; min-height: 100px; resize: vertical; padding: 13px; line-height: 1.5; }
+.ideas { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.idea { border: 1px dashed color-mix(in srgb, var(--a-studiya) 45%, var(--line)); background: transparent; color: var(--muted); border-radius: 999px;
+  padding: 6px 12px; font-size: 13px; cursor: pointer; transition: all .3s var(--ease); }
+.idea:hover { color: var(--a-studiya); border-style: solid; border-color: var(--a-studiya); background: color-mix(in srgb, var(--a-studiya) 8%, transparent); transform: translateY(-2px); }
+.list-item { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; padding: 12px 8px; margin: 0 -8px;
+  border-top: 1px solid var(--line); font-size: 14px; border-radius: 10px; transition: background .25s; }
+.list-item:hover { background: color-mix(in srgb, var(--sunk) 70%, transparent); }
+.list-item:first-child { border-top: 0; }
+.list-item code { font-family: var(--font-code); font-size: 12px; overflow-wrap: anywhere; color: var(--muted); }
+.post { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+.post:first-child { border-top: 0; }
+.post .thumb { aspect-ratio: 9 / 16; width: 100%; background: var(--sunk); border-radius: 12px; overflow: hidden; transition: transform .4s var(--ease); }
+.post:hover .thumb { transform: scale(1.04) rotate(-1deg); }
+.post .thumb video, .post .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post .title { font-weight: 600; font-size: 16px; margin: 6px 0 4px; }
+.mgrid { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); margin-top: 4px; }
+.mgrid b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+.skillchips { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 12px; }
+.skill { border-radius: 12px; padding: 13px 15px; font-size: 13.5px; line-height: 1.5;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--a-smm) 12%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--a-smm) 30%, var(--line)); }
+.skill + .skill { background: linear-gradient(135deg, color-mix(in srgb, var(--a-nashr) 12%, var(--surface)), var(--surface)); border-color: color-mix(in srgb, var(--a-nashr) 30%, var(--line)); }
+.skill b { display: block; font-size: 14.5px; margin-bottom: 4px; }
+details.rep { border-top: 1px solid var(--line); padding: 12px 0; }
+details.rep:first-child { border-top: 0; }
+details.rep summary { cursor: pointer; font-weight: 600; display: flex; gap: 10px; justify-content: space-between; list-style: none; }
+details.rep summary::-webkit-details-marker { display: none; }
+details.rep summary span:first-child::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 10px; vertical-align: 2px;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform .35s var(--ease); }
+details.rep[open] summary span:first-child::before { transform: rotate(45deg); }
+details.rep[open] pre { animation: rise .45s var(--ease) both; }
+details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-size: 14px; background: var(--sunk); padding: 12px 14px; border-radius: 12px; margin: 10px 0 0; }
+
+/* grafiklar: ustunlar o'sadi, chiziq chiziladi */
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart svg rect.bar { transform-box: fill-box; transform-origin: bottom; animation: barUp .9s var(--ease) both; animation-delay: calc(var(--i, 0) * 18ms); }
+@keyframes barUp { from { transform: scaleY(0); } }
+.chart svg rect.bar:hover { fill-opacity: 1; filter: brightness(1.1); }
+.chart svg polyline { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.6s var(--ease) .3s forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.chart svg circle { animation: pop .5s var(--ease) 1.6s both; transform-box: fill-box; transform-origin: center; }
+@keyframes pop { from { transform: scale(0); } }
+.chart .note { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* kirish sahifasi */
+.login { max-width: 400px; margin: 14vh auto 0; padding-inline: 16px; animation: rise .8s var(--ease) both; }
+.login form { display: grid; gap: 10px; margin-top: 18px; background: var(--surface); padding: 20px; border-radius: var(--r); border: 1px solid var(--line); box-shadow: var(--glow); }
+.login .brand h1 { color: var(--ink); }
+.err { color: var(--bad); font-size: 14px; min-height: 1.4em; }
+.toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 11px 18px 11px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); z-index: 20; display: flex; gap: 10px; align-items: center;
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .45); animation: toastIn .5s var(--ease) both; }
+.toast::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--sign); flex: none; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 18px) scale(.96); } }
+
+@media (max-width: 980px) {
+  .grid, .grid.even { grid-template-columns: minmax(0, 1fr); }
+  .team .row3, .team .row4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  aside.side { position: sticky; top: 0; height: auto; z-index: 15; padding-block: 12px 8px; padding-right: max(14px, env(safe-area-inset-right, 0px)); gap: 10px; }
+  aside.side::after { top: auto; bottom: 0; left: 0; right: 0; width: auto; height: 3px;
+    background: repeating-linear-gradient(90deg, var(--sign) 0 26px, transparent 26px 52px); background-size: 52px 3px; animation: road 2.4s linear infinite reverse; }
+  .nav { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 6px; scrollbar-width: none; }
+  .nav .group { display: none; }
+  .nav a { white-space: nowrap; padding: 7px 11px; }
+  .nav a:hover { transform: none; }
+  .nav a[aria-current="page"]::before { left: 10px; right: 10px; top: auto; bottom: -1px; height: 3px; width: auto; border-radius: 3px; }
+  .side-foot { display: none; }
+  .stripe { display: none; }
+  .page-inner { padding-top: 16px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+@media (max-width: 520px) {
+  .review { grid-template-columns: minmax(0, 1fr); }
+  .review .phone { max-width: 210px; margin: 0 auto; }
+  .team .row3, .team .row4 { grid-template-columns: minmax(0, 1fr); }
+  .page-head .right { margin-left: 0; }
+  .card { padding: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .chart svg polyline { stroke-dashoffset: 0; }
+}
+</style>
+
+
+<section id="loginView" class="login" hidden>
+  <div class="brand"><div class="diamond"><span>Z</span></div><div><h1>ZFT</h1><small style="color:var(--muted)">Chorraha uchun AI marketing markazi</small></div></div>
+  <form id="loginForm">
+    <label for="pw">Parol</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn primary" type="submit">Kirish</button>
+    <div class="err" id="loginErr" role="alert"></div>
+  </form>
+</section>
+
+<div class="shell" id="appView" hidden>
+  <aside class="side">
+    <div class="brand"><div class="diamond"><span>Z</span></div><div><h1>ZFT</h1><small>Chorraha · AI marketing</small></div></div>
+    <nav class="nav" id="nav" aria-label="Sahifalar"></nav>
+    <div class="side-foot"><span id="updated"></span><span id="sideChips"></span></div>
+  </aside>
+  <main class="page">
+    <div class="page-inner">
+      <div class="stripe" aria-hidden="true"></div>
+      <div class="demo" id="demoBanner" hidden><strong>Namuna ma'lumotlar.</strong><span>Bu panelning ko'rinishi. Serverga o'rnatilgach, bu yerda haqiqiy raqamlar chiqadi va tugmalar ishlaydi.</span></div>
+      <div class="demo" id="sampleWarn" hidden><strong>Savollar bazasi namuna holatda.</strong><span>Rasmiy savollarni import qiling: <code>python -m zft import savollar.csv</code></span></div>
+      <header class="page-head" id="pageHead"></header>
+
+      <!-- JAMOA -->
+      <section data-view="jamoa" class="stack">
+        <div class="team" id="team"></div>
+        <div class="card">
+          <div class="card-head"><h2>Jamoa suhbati</h2><span style="color:var(--muted);font-size:13px">Bir vaqtda bitta Jarvis ishlaydi, qolganlari dam oladi</span></div>
+          <div class="feed" data-feed="all"></div>
+          <form class="chat" data-chat><input placeholder="Bosh direktorga yozing: holat, g'oya yoki buyruq" aria-label="Bosh direktorga xabar" autocomplete="off"><button class="btn primary" type="submit">Yuborish</button></form>
+        </div>
+      </section>
+
+      <!-- BOSH DIREKTOR -->
+      <section data-view="direktor" class="stack" hidden>
+        <div class="kpis" id="kpis"></div>
+        <div class="grid">
+          <div class="col">
+            <div class="card"><div class="card-head"><h2>Tasdiq kutayotgan video</h2><span id="pendingStatus"></span></div><div id="review"></div></div>
+            <div class="card"><div class="card-head"><h2>Bosh direktor bilan suhbat</h2></div>
+              <div class="feed" data-feed="direktor"></div>
+              <form class="chat" data-chat><input placeholder="Savol, g'oya yoki buyruq yozing" aria-label="Bosh direktorga xabar" autocomplete="off"><button class="btn primary" type="submit">Yuborish</button></form>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card"><h3>Avtopilot</h3>
+              <div class="switch"><div style="font-size:14px">Yoqilsa, kuniga 2 ta video tasdiqsiz o'zi chiqadi</div><label class="toggle"><input type="checkbox" id="autoToggle" aria-label="Avtopilot"><span></span></label></div>
+              <div class="actions" style="margin-top:0"><button class="btn" type="button" data-post="/api/video-now">Hozir video yasash</button><button class="btn" type="button" data-post="/api/report-now">Kunlik hisobot</button></div>
+            </div>
+            <div class="card"><h3>Bugungi jadval</h3><ul class="day" id="road"></ul></div>
+            <div class="card"><h3>Yangi Jarvis ishga olish</h3>
+              <form id="hireForm" style="display:grid;gap:8px;margin-top:10px">
+                <input id="hireName" placeholder="Nomi, masalan: Izohchi" required aria-label="Jarvis nomi" style="padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)">
+                <textarea id="hireRole" placeholder="Vazifasi: masalan, Instagram izohlariga javob loyihalarini yozadi va eng ko'p so'ralgan savollarni Marketologga yetkazadi" required aria-label="Vazifasi" style="min-height:70px"></textarea>
+                <select id="hireHour" aria-label="Har kuni ishlash vaqti"><option value="">Faqat topshiriq berilganda ishlaydi</option></select>
+                <button class="btn primary" type="submit">Ishga olish</button>
+              </form>
+              <div id="hired" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- YANGI JARVIS (umumiy sahifa) -->
+      <section data-view="custom" class="stack" hidden>
+        <div class="grid">
+          <div class="card"><div class="card-head"><h2>Topshiriq berish</h2><button class="btn danger" type="button" id="fireBtn">Jamoadan chiqarish</button></div>
+            <p id="customRole" style="margin:0 0 10px;color:var(--muted)"></p>
+            <form class="chat" id="customForm" style="margin-top:0"><input id="customText" placeholder="Topshiriq yozing" aria-label="Topshiriq" autocomplete="off"><button class="btn primary" type="submit">Yuborish</button></form>
+          </div>
+          <div class="card"><h3>Suhbat</h3><div class="feed" id="customFeed" style="margin-top:8px"></div></div>
+        </div>
+      </section>
+
+      <!-- MARKETOLOG -->
+      <section data-view="marketolog" class="stack" hidden>
+        <div class="card">
+          <div class="card-head"><h2>Bozor strategiyasi</h2><div class="actions" style="margin:0"><button class="btn" type="button" data-post="/api/market-research">Bozorni hozir tahlil qilish</button></div></div>
+          <div id="strategy"></div>
+        </div>
+        <div class="grid even">
+          <div class="card"><div class="card-head"><h2>Videolar tahlili</h2><button class="btn primary" type="button" data-post="/api/review-now">Hozir tahlil qilish</button></div>
+            <p style="margin:0 0 8px;color:var(--muted);font-size:14px">Har joylangan video: qancha ko'rildi, nega kam yoki ko'p, keyingi safar nima o'zgarsin.</p>
+            <div id="reviews"></div></div>
+          <div class="card"><div class="card-head"><h2>Marketolog buyruqlari</h2></div><div class="feed" data-feed="marketolog"></div></div>
+        </div>
+      </section>
+
+      <!-- SMMchi -->
+      <section data-view="smm" class="stack" hidden>
+        <div class="card"><h3>Ishlatadigan skillari</h3>
+          <div class="skillchips">
+            <div class="skill"><b>Asror uslubi (asosiy)</b>Raqamli hook ("3 ta xato"), to'g'ridan-to'g'ri "siz", og'zaki o'zbekcha, ikki yo'lli CTA: qattiq so'rov va yengil "layk bosib qo'ying".</div>
+            <div class="skill"><b>Anti-AI writing</b>Yakuniy tozalash: aniq detal, bo'sh "X emas, Y" yo'q, hype va em-dash yo'q, yozilgan matnga to'liq tekshiruv.</div>
+          </div>
+        </div>
+        <div class="grid even">
+          <div class="card"><div class="card-head"><h2>Oxirgi post matnlari</h2></div><div id="captions"></div></div>
+          <div class="card"><div class="card-head"><h2>SMMchi suhbati</h2></div><div class="feed" data-feed="smm"></div></div>
+        </div>
+        <div class="grid even">
+          <div class="card"><div class="card-head"><h2>Instagram izohlari</h2><button class="btn" type="button" data-post="/api/smm/check-now">Hozir tekshirish</button></div>
+            <p style="margin:0 0 8px;color:var(--muted);font-size:14px">Har 20 daqiqada o'zi javob beradi. Narx, to'lov, shikoyat va va'da haqidagilar sizga yuboriladi. «test», «havola» deb yozganlarga DM'da bot havolasi boradi.</p>
+            <div id="igc"></div></div>
+          <div class="col">
+            <div class="card"><h3>Hashtaglar samaradorligi</h3><div class="tbl" id="tags" style="margin-top:8px"></div></div>
+            <div class="card"><h3>E'londan oldingi sifat bahosi</h3><div id="quality" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOLIYA -->
+      <section data-view="moliya" class="stack" hidden>
+        <div class="kpis" id="finGrid" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div>
+        <div class="grid">
+          <div class="col">
+            <div class="card"><div class="card-head"><h2>Moliya hisoboti</h2><button class="btn" type="button" data-post="/api/report-now" data-body='{"section":"moliya"}'>Telegram'ga yuborish</button></div>
+              <p id="finText" style="margin:0 0 10px;line-height:1.55"></p>
+              <div class="meter" aria-hidden="true"><div id="finMeter" style="width:0"></div></div>
+              <div class="rows" id="finRows"></div></div>
+            <div class="card"><h3>Kirim yoki xarajat qo'shish</h3>
+              <form class="inline" id="ledgerForm">
+                <select id="ledKind" aria-label="Turi"><option value="income">Kirim</option><option value="expense">Xarajat</option></select>
+                <input id="ledAmount" type="number" min="0" step="any" placeholder="Summa" required aria-label="Summa">
+                <select id="ledCur" aria-label="Valyuta"><option>UZS</option><option>USD</option></select>
+                <select id="ledCat" aria-label="Toifa"><option value="">Toifa: avtomatik</option><option value="reklama">Reklama</option><option value="server">Server</option><option value="ai">AI</option><option value="hamkor">Hamkor ulushi</option><option value="maosh">Maosh</option><option value="tolov">Foydalanuvchi to'lovi</option><option value="boshqa">Boshqa</option></select>
+                <input id="ledNote" placeholder="Izoh, masalan: 3 ta premium obuna" aria-label="Izoh">
+                <button class="btn primary" type="submit">Qo'shish</button>
+              </form>
+              <div class="rows" id="ledCats" style="margin-top:10px"></div>
+              <div id="ledger" style="margin-top:10px"></div></div>
+          </div>
+          <div class="col">
+            <div class="card"><h3>Video budjeti</h3>
+              <div class="meter" aria-hidden="true"><div id="vMeter" style="width:0;background:var(--sign)"></div></div>
+              <div class="rows" id="vRows"></div>
+              <form class="inline" id="budgetForm"><input id="budgetUsd" type="number" min="0" max="5000" step="1" aria-label="Oylik video budjeti, dollar"><button class="btn" type="submit">Budjetni saqlash</button></form></div>
+            <div class="card"><h3>Moliya suhbati</h3><div class="feed" data-feed="moliya" style="max-height:320px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEDIA -->
+      <section data-view="media" class="stack" hidden>
+        <div class="grid">
+          <div class="card"><div class="card-head"><h2>Odamlar qayerdan kelyapti</h2><button class="btn" type="button" data-post="/api/report-now" data-body='{"section":"media"}'>Telegram'ga yuborish</button></div><div class="tbl" id="sources"></div></div>
+          <div class="col">
+            <div class="card"><h3>Kuzatuvli havola yaratish</h3>
+              <form class="inline" id="linkForm">
+                <input id="linkCode" placeholder="kod: avtomaktab_1" pattern="[A-Za-z0-9_\-]{1,64}" required aria-label="Havola kodi">
+                <input id="linkLabel" placeholder="Nomi: Yunusobod avtomaktabi" aria-label="Havola nomi">
+                <button class="btn primary" type="submit">Yaratish</button>
+              </form>
+              <div id="links" style="margin-top:8px"></div></div>
+            <div class="card"><h3>Botda eng ko'p xato qilinayotgan savollar</h3><div id="hard" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>Media suhbati</h2></div><div class="feed" data-feed="media" style="max-height:320px"></div></div>
+      </section>
+
+      <!-- STUDIYA -->
+      <section data-view="studiya" class="stack" hidden>
+        <div class="grid">
+          <div class="card">
+            <div class="card-head"><h2>Studiyaga topshiriq</h2><span style="color:var(--muted);font-size:13px">Keyingi video: <b id="nextSlot" class="num"></b></span></div>
+            <form id="taskForm">
+              <label for="taskText" style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">G'oya yoki mavzu. Ssenariy, sahnalar, ovoz va musiqa AI tomonidan tayyorlanadi.</label>
+              <textarea id="taskText" placeholder="Masalan: imtihon kunidagi hayajon haqida kulgili hikoya"></textarea>
+              <div class="ideas" id="ideas"></div>
+              <div class="actions"><button class="btn primary" type="submit" data-now="1">Hozir video yasash</button><button class="btn" type="submit" data-now="0">Navbatga qo'shish</button></div>
+            </form>
+            <div id="tasks" style="margin-top:12px"></div>
+          </div>
+          <div class="card"><h3>Studiya suhbati</h3><div class="feed" data-feed="studiya" style="max-height:420px"></div></div>
+        </div>
+        <div class="card"><div class="card-head"><h2>Barcha videolar</h2></div><div id="posts"></div></div>
+      </section>
+
+      <!-- NASHR -->
+      <section data-view="nashr" class="stack" hidden>
+        <div class="grid">
+          <div class="card"><div class="card-head"><h2>Navbat va e'lonlar</h2><button class="btn primary" type="button" data-post="/api/publish-now">Tasdiqlanganini hozir joylash</button></div><div id="queue"></div></div>
+          <div class="col">
+            <div class="card"><h3>Ulanishlar</h3><div class="rows" id="platforms" style="margin-top:8px"></div></div>
+            <div class="card"><h3>Nashr suhbati</h3><div class="feed" data-feed="nashr" style="max-height:320px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISOBOTCHI -->
+      <section data-view="hisobot" class="stack" hidden>
+        <div class="card"><h3>Hisobot so'rash (Telegram'ga keladi)</h3>
+          <div class="actions">
+            <button class="btn primary" type="button" data-post="/api/report-now">Kunlik umumiy</button>
+            <button class="btn" type="button" data-post="/api/report-now" data-body='{"section":"moliya"}'>Moliya</button>
+            <button class="btn" type="button" data-post="/api/report-now" data-body='{"section":"marketolog"}'>Marketolog</button>
+            <button class="btn" type="button" data-post="/api/report-now" data-body='{"section":"media"}'>Media</button>
+          </div>
+        </div>
+        <div class="grid even">
+          <div class="card"><div class="card-head"><h2>Yuborilgan hisobotlar</h2></div><div id="reports"></div></div>
+          <div class="card"><h3>Hisobotchi suhbati</h3><div class="feed" data-feed="hisobot"></div></div>
+        </div>
+      </section>
+
+      <!-- HAMKORLAR -->
+      <section data-view="hamkorlar" class="stack" hidden>
+        <div class="kpis" id="parKpis"></div>
+        <div class="grid">
+          <div class="card"><div class="card-head"><h2>Hamkorlar</h2><span style="color:var(--muted);font-size:13px">Har bir hamkor o'z kabinetida faqat o'z raqamlarini ko'radi</span></div><div id="parList"></div></div>
+          <div class="col">
+            <div class="card"><h3>Yangi hamkor</h3>
+              <form id="parForm" style="display:grid;gap:8px;margin-top:10px">
+                <input id="parName" placeholder="Nomi: Ali Blog yoki Yunusobod avtomaktabi" required aria-label="Hamkor nomi">
+                <div class="inline" style="margin:0"><select id="parKind" aria-label="Turi"><option value="bloger">Bloger</option><option value="avtomaktab">Avtomaktab</option><option value="boshqa">Boshqa</option></select>
+                <input id="parPct" type="number" min="0" max="60" step="0.5" value="20" aria-label="Ulush foizi" style="max-width:110px"><span style="align-self:center;color:var(--muted)">% ulush</span></div>
+                <input id="parPromo" placeholder="Promo-kod (ixtiyoriy): ALI20" aria-label="Promo-kod">
+                <input id="parContact" placeholder="Aloqa: @username yoki telefon" aria-label="Aloqa">
+                <button class="btn primary" type="submit">Qo'shish</button>
+              </form></div>
+            <div class="card"><h3>To'lov yozish</h3>
+              <p style="margin:6px 0 10px;color:var(--muted);font-size:14px">Foydalanuvchi pul to'lasa, shu yerga yozing. U hamkor orqali kelgan bo'lsa, ulush o'zi hisoblanadi.</p>
+              <form class="inline" id="payForm"><input id="payTg" placeholder="Telegram ID" aria-label="Telegram ID"><input id="payAmount" type="number" min="1" step="any" placeholder="Summa, so'm" required aria-label="Summa"><input id="payNote" placeholder="Izoh" aria-label="Izoh"><button class="btn primary" type="submit">Yozish</button></form>
+              <div id="payList" style="margin-top:10px"></div></div>
+            <div class="card"><h3>Oylik referal konkursi</h3><pre id="contest" style="white-space:pre-wrap;font:inherit;margin:8px 0 0"></pre></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- O'QUVCHILAR -->
+      <section data-view="oquvchilar" class="stack" hidden>
+        <div class="kpis" id="learnKpis"></div>
+        <div class="grid even">
+          <div class="card"><h3>Botdagi o'qish tizimi</h3><ul style="margin:8px 0 0;padding-left:18px;line-height:1.7;font-size:14px">
+            <li>Imtihon sanasi → shaxsiy kunlik reja va eslatma (22:00–08:00 jim)</li>
+            <li>Xatolar ustida ishlash, mavzu bo'yicha test, 20 savollik imtihon simulyatsiyasi</li>
+            <li>Tayyorlik foizi, nishonlar, ketma-ket kunlar, do'st bilan duel</li>
+            <li>«Nega shu javob?» — AI tushuntirish (har savolga bir marta, keyin keshdan)</li>
+            <li>3 kun kelmaganlarga qaytaruvchi xabar, imtihondan keyin «o'tdingizmi?» so'rovi</li>
+            <li>Yakshanba 20:30 — haftalik turnir g'oliblari guruhga</li></ul></div>
+          <div class="card"><h3>Haqiqiy imtihon natijalari</h3><div class="rows" id="learnReal" style="margin-top:8px"></div>
+            <p style="margin:10px 0 0;color:var(--muted);font-size:13px">Foydalanuvchilar imtihondan keyingi kuni botdagi so'rovga javob beradi.</p></div>
+        </div>
+      </section>
+
+      <!-- BOSHQARUV -->
+      <section data-view="boshqaruv" class="stack" hidden>
+        <div class="grid">
+          <div class="col">
+            <div class="card"><div class="card-head"><h2>Oylik maqsadlar</h2><button class="btn" type="button" data-post="/api/brief-now">Ertalabki brifni hozir yuborish</button></div>
+              <div id="goals"></div>
+              <form class="inline" id="goalForm" style="margin-top:12px"><select id="goalMetric" aria-label="Ko'rsatkich"></select><input id="goalTarget" type="number" min="1" step="any" placeholder="Maqsad" required aria-label="Maqsad"><button class="btn primary" type="submit">Saqlash</button></form></div>
+            <div class="card"><div class="card-head"><h2>Jarvislar samaradorligi, 7 kun</h2></div><div class="tbl" id="eff"></div></div>
+          </div>
+          <div class="col">
+            <div class="card"><h3>Sinov rejimi</h3>
+              <div class="switch"><div style="font-size:14px">Yoqilsa: video, Instagram izohi, guruh viktorinasi va ommaviy xabarlar <b>ommaga chiqmaydi</b>. Hammasi sizga «SINOV» deb keladi.</div><label class="toggle"><input type="checkbox" id="dryToggle" aria-label="Sinov rejimi"><span></span></label></div></div>
+            <div class="card"><h3>Avtomatik ogohlantirishlar</h3><ul style="margin:8px 0 0;padding-left:18px;line-height:1.7;font-size:14px">
+              <li>08:00 — ertalabki brif Telegram'ga</li>
+              <li>Video odatdagidan 3× ko'p ko'rilsa — darhol xabar</li>
+              <li>Budjet 80% va 95% ga yetganda</li>
+              <li>Yangi odamlar keskin oshsa (manbasi bilan)</li>
+              <li>Videolar ketma-ket e'lon qilinmasa</li></ul></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ULANISHLAR -->
+      <section data-view="ulanishlar" class="stack" hidden>
+        <div class="demo" id="connLast" hidden></div>
+        <div class="card" style="font-size:14px;line-height:1.55">
+          <strong>Parol kerak emas.</strong> «Ulash» ni bossangiz, Instagram yoki TikTok'ning o'z sahifasi ochiladi: o'sha yerda kirasiz va ruxsat berasiz. ZFT parolingizni ko'rmaydi, faqat video joylash va statistika olish huquqini oladi. Xohlagan payt «Uzish» bilan bekor qilasiz.
+        </div>
+        <div class="grid even">
+          <div class="card" id="cIG"></div>
+          <div class="card" id="cTT"></div>
+        </div>
+        <div class="card" id="cTG"></div>
+      </section>
+
+      <!-- GRAFIKLAR -->
+      <section data-view="grafiklar" class="stack" hidden>
+        <div class="card chart"><div class="card-head"><h2>Yangi foydalanuvchilar, 30 kun</h2><div class="legend"><span><i style="background:var(--sign)"></i>Yangi odamlar</span><span><i style="background:var(--info)"></i>Test javoblari</span></div></div><div id="chUsers"></div></div>
+        <div class="grid even">
+          <div class="card chart"><div class="card-head"><h2>Videolar ko'rilishi</h2></div><div id="chViews"></div></div>
+          <div class="card chart"><div class="card-head"><h2>Manbalar, 30 kun</h2></div><div id="chSources"></div></div>
+        </div>
+        <div class="card chart"><div class="card-head"><h2>Kunlik xarajat (AI video + AI matn)</h2></div><div id="chSpend"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const POSTER = "data:image/jpeg;base64,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";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = (n) => (n === null || n === undefined) ? "—" : Number(n).toLocaleString("en-US").replace(/,/g, " ");
+  let DEMO = false, data = null, agents = [], cache = {};
+
+  const PAGES = [
+    ["jamoa", "Jamoa", "J", null, "Umumiy"],
+    ["direktor", "Bosh direktor", "D", "direktor", "Jarvislar"],
+    ["marketolog", "Marketolog", "B", "marketolog"],
+    ["smm", "SMMchi", "S", "smm"],
+    ["moliya", "Moliya", "$", "moliya"],
+    ["media", "Media", "M", "media"],
+    ["studiya", "Studiya", "V", "studiya"],
+    ["nashr", "Nashr", "N", "nashr"],
+    ["hisobot", "Hisobotchi", "H", "hisobot"],
+    ["hamkorlar", "Hamkorlar", "%", null, "O'sish"],
+    ["oquvchilar", "O'quvchilar", "O"],
+    ["grafiklar", "Grafiklar", "G", null, "Kuzatuv"],
+    ["boshqaruv", "Boshqaruv", "⚙", null, "Sozlamalar"],
+    ["ulanishlar", "Ulanishlar", "U"],
+  ];
+  const AG = { ega: ["Siz", "Z"] };
+  const KNOWN = ["direktor", "marketolog", "smm", "moliya", "media", "studiya", "nashr", "hisobot", "ega"];
+  const PAGE_C = { jamoa: "var(--sign)", hamkorlar: "var(--a-smm)", oquvchilar: "var(--a-media)", grafiklar: "var(--a-marketolog)", boshqaruv: "var(--a-hisobot)", ulanishlar: "var(--a-nashr)" };
+  const colorOf = (k) => { if (KNOWN.includes(k)) return `var(--a-${k})`; if (PAGE_C[k]) return PAGE_C[k];
+    let h = 0; for (const ch of String(k)) h = (h * 31 + ch.charCodeAt(0)) % 360; return `oklch(0.7 0.15 ${h})`; };
+  PAGES.forEach(([k, n, i]) => (AG[k] = [n, i]));
+
+  // ================= namuna ma'lumotlar =================
+  const T0 = Math.floor(Date.now() / 1000);
+  function demoOverview() {
+    const users = [3, 5, 4, 9, 7, 12, 10, 14, 11, 18, 16, 22, 19, 27], ans = [20, 31, 28, 55, 47, 80, 66, 92, 75, 120, 104, 150, 131, 176];
+    return {
+      demo: true, now: new Date().toISOString().slice(0, 10) + " 09:12",
+      kpi: { today_users: 27, total_users: 214, active_week: 131, referrals_week: 23, answers_today: 176, group_members: 96, posts_week: 11 },
+      series: users.map((u, i) => ({ day: "", users: u, answers: ans[i] })),
+      sources: [
+        { code: "tiktok", label: "TikTok profil", week: 58, total: 81, active: 49 },
+        { code: "referral", label: "Do'st taklifi", week: 23, total: 34, active: 27 },
+        { code: "avtomaktab_1", label: "Yunusobod avtomaktabi", week: 19, total: 31, active: 28 },
+        { code: "insta", label: "Instagram profil", week: 14, total: 29, active: 15 },
+        { code: "tgkanal", label: "Telegram kanal", week: 9, total: 21, active: 12 },
+        { code: "group", label: "Guruh viktorinasi", week: 6, total: 12, active: 12 }],
+      links: [{ code: "avtomaktab_1", label: "Yunusobod avtomaktabi", url: "https://t.me/ChorrahaBot?start=avtomaktab_1" },
+              { code: "tiktok", label: "TikTok profil", url: "https://t.me/ChorrahaBot?start=tiktok" }],
+      budget: { spent: 0.84, limit: 8, model: "claude-haiku-5-5", enabled: true },
+      video_budget: { monthly: 30, spent: 11.4, allowance_today: 3.1, cinematic_cost: 1.8, days_left: 7, by_kind: { video_scene: { count: 33, usd: 10.9 } }, enabled: true },
+      next_slot: "bugun 20:00", auto_publish: false,
+      schedule: { slots: [750, 1200], lead: 150, report: 22, quiz: [8, 13, 20] },
+      platforms: { telegram: true, instagram: true, tiktok: false, group: true }, questions: 1276, sample_questions: false,
+      tasks: [{ id: 4, text: "Imtihon navbatidagi hayajon — POV", status: "open", source: "marketolog" },
+              { id: 3, text: "Dadasi kalitni berishdan oldin sinaydi", status: "done", post_id: 7 }],
+      pending: { id: 7, status: "pending", tier: "cinematic", cost: 1.8, publish_at: "bugun 20:00", hook: "Dadam kalitni berishdan oldin...",
+        caption: "Dadangiz kalitni berishdan oldin 3 ta savol bersa, nechtasiga javob berasiz?\n\nIzohga \"3\" deb yozing, botdagi 20 ta bepul savolni yuboramiz. Hozircha shart emas desangiz, shu videoga bitta layk bosib qo'ying.",
+        hashtags: ["prava", "pravaimtihon", "haydovchilik", "toshkent", "dadam"], reason: "Oilaviy skit formati o'tgan hafta eng ko'p ulashilgan (41 ta).", video: null },
+      hard_questions: [{ text: "Tartibga solinmagan piyodalar o'tish joyida yo'l berish", attempts: 64, wrong_rate: 0.41 },
+                       { text: "Sariq chiroq miltillayotgan chorrahadan o'tish", attempts: 52, wrong_rate: 0.37 }],
+    };
+  }
+  function demoAgents() {
+    const m = (i, s, r, text) => ({ id: i, at: T0 - 900 + i * 50, sender: s, recipient: r, text });
+    return {
+      agents: [
+        { key: "direktor", name: "Bosh direktor", role: "Boshqaradi: vazifa taqsimoti, tasdiq nazorati, yangi Jarvis ishga olish", active: false, last_doing: "Videoni tekshiryapti", messages_today: 11 },
+        { key: "marketolog", name: "Marketolog", role: "Strategiya: bozor, auditoriya, har video yo'nalishi, videolar tahlili (nima va nega)", active: false, last_doing: "Joylangan videolarni tahlil qilyapti", messages_today: 6 },
+        { key: "smm", name: "SMMchi", role: "Matn: post matni, hook, CTA, hashtag (Asror uslubi + anti-AI)", active: true, doing: "Post matnini yozyapti (Asror uslubi + anti-AI)", messages_today: 3 },
+        { key: "moliya", name: "Moliya", role: "Pul: xarajat, kirim, budjet taqsimoti, prognoz", active: false, last_doing: "Budjetni hisoblayapti", messages_today: 3 },
+        { key: "media", name: "Media", role: "Raqamlar: ko'rishlar, manbalar, botdagi qiyin savollar", active: false, last_doing: "Natijalarni tahlil qilyapti", messages_today: 4 },
+        { key: "studiya", name: "Studiya", role: "Video: ssenariy, AI sahnalar, ovoz, montaj", active: false, last_doing: "Video yasayapti", messages_today: 2 },
+        { key: "nashr", name: "Nashr", role: "Joylash: Instagram, TikTok, Telegram kanal va guruh", active: false, last_doing: "Guruhga viktorina yuboryapti", messages_today: 3 },
+        { key: "hisobot", name: "Hisobotchi", role: "Hisobot: barcha bo'limlardan yig'ib Telegram'ga yuboradi", active: false, last_doing: "Kunlik hisobotni yubordi", messages_today: 2 },
+        { key: "x_izohchi", name: "Izohchi", role: "Instagram izohlariga javob loyihalarini yozadi", custom: true, daily_hour: 18, active: false, last_doing: "Kunlik vazifani bajardi", messages_today: 1 }],
+      messages: [
+        m(1, "direktor", "media", "20:00 videosi uchun brif tayyorlang."),
+        m(2, "media", "direktor", "Eng yaxshi video #6 «Oxirgi savol. 30 soniya qoldi» — 6 402 ball. Eng kuchli format «father_son». 7 kunda eng ko'p odam TikTok'dan keldi (58)."),
+        m(3, "direktor", "marketolog", "Media brifi tayyor. Bugungi video yo'nalishini belgilang."),
+        m(4, "marketolog", "studiya", "Buyruq: auditoriya — birinchi marta imtihonga boradigan 18–22 yoshlilar; yo'nalish — oilaviy skit; hook — dadasi kalitni yashiradi."),
+        m(5, "marketolog", "media", "Bu videoda o'lchang: ulashishlar va do'st belgilash izohlari."),
+        m(6, "direktor", "moliya", "Bu slot uchun qancha sarflashimiz mumkin?"),
+        m(7, "moliya", "direktor", "Kinematografik AI video tavsiya qilaman (≈1.80$). Oy: 11.40$ / 30$ sarflandi."),
+        m(8, "direktor", "studiya", "Video yasang. Topshiriq: «Dadasi kalitni berishdan oldin sinaydi»."),
+        m(9, "studiya", "direktor", "#7 tayyor: Kinematografik AI video, «Dadam kalitni berishdan oldin...», 1.80$."),
+        m(10, "direktor", "smm", "#7 uchun post matni, hashtag va CTA yozing."),
+        m(11, "smm", "direktor", "#7 matni tayyor. Anti-AI: em-dash olib tashlandi, «hayotingizni o'zgartiradi» degan hype o'rniga aniq raqam qo'yildi."),
+        m(12, "marketolog", "studiya", "#5 «Siz bo'lganingizda kim birinchi o'tardi?» — kam: 960 ko'rish, 19 saqlash. Sabab: birinchi 2 soniyada mashina ko'rinmaydi, savol 4-soniyada chiqadi. Yaxshilash: savolni 1-soniyaga oling; videoni 18 soniyaga qisqartiring."),
+        m(13, "marketolog", "smm", "#5 bo'yicha: CTA'da «izohga javob yozing» o'rniga aniq so'z bering — «O'NG» yoki «CHAP»."),
+        m(14, "nashr", "direktor", "#6 joylandi: instagram, telegram."),
+        m(15, "hisobot", "ega", "Kunlik hisobot Telegram'ga yuborildi."),
+        m(16, "ega", "direktor", "Bugun nechta odam keldi?"),
+        m(17, "direktor", "ega", "Bugun 27 yangi foydalanuvchi, ko'pi TikTok'dan. 20:00 dagi video tayyor, tasdig'ingizni kutyapti."),
+        m(18, "direktor", "x_izohchi", "Kunlik vazifangni bajar."),
+        m(19, "x_izohchi", "ega", "Bugun 3 ta savol takrorlandi: \"bot pullikmi?\", \"imtihon qachon?\", \"rasmli savollar bormi?\". Javob loyihalarini tayyorladim; birinchisini Marketologga ham yubordim."),
+      ],
+    };
+  }
+  function demoStrategy() {
+    return { summary: "Namuna: raqobatchilar asosan oddiy test ilovalari va savol-javob postlari bilan ishlaydi, hikoyaviy video kam. Eng kuchli og'riq — imtihondan yiqilib qolish qo'rquvi. Kuz — avtomaktablarga qabul mavsumi.",
+      pillars: ["Imtihon hayajoni va g'alaba hikoyalari", "Oilaviy va do'stlar skitlari", "Chorrahadagi vaziyatlar: siz nima qilardingiz?", "Mif yoki haqiqat"],
+      competitors: [{ name: "Oddiy test botlari", what: "Savollar ro'yxati", weakness: "Tushuntirish va hikoya yo'q" }, { name: "Avtomaktab sahifalari", what: "Qabul e'lonlari", weakness: "Muntazam kontent yo'q" }],
+      audience: [{ segment: "18–22 yosh, birinchi imtihon", pain: "yiqilib qolish qo'rquvi" }, { segment: "Ota-onalar", pain: "farzandi xavfsiz haydashi" }],
+      offer_ideas: ["Avtomaktablar uchun guruh promokodi", "'3 do'st — 1 hafta premium' aksiyasi"] };
+  }
+  function demoReviews() {
+    return [
+      { post_id: 6, at: T0 - 3600 * 10, verdict: "yaxshi", hook: "Oxirgi savol. 30 soniya qoldi", text: "#6 — yaxshi: 3 120 ko'rish, 88 saqlash, 41 ulashish. Sabab: hook birinchi soniyada taymer bilan boshlanadi, oxirgi sahnada hissiy yechim bor. Saqlab qolish: POV formati va taymer." },
+      { post_id: 5, at: T0 - 3600 * 34, verdict: "kam", hook: "Siz bo'lganingizda kim birinchi o'tardi?", text: "#5 — kam: 960 ko'rish, 19 saqlash. Sabab: savol 4-soniyada chiqadi, boshida faqat ko'cha ko'rinadi. Yaxshilash: savolni 1-soniyaga oling; 18 soniyaga qisqartiring; CTA'da aniq so'z bering (O'NG/CHAP)." },
+      { post_id: 4, at: T0 - 3600 * 58, verdict: "o'rtacha", hook: "Do'stlar bahsi: kim birinchi o'tadi?", text: "#4 — o'rtacha: 1 840 ko'rish, 31 saqlash. Sabab: hikoya kuchli, lekin oxiri bashorat qilinadigan. Yaxshilash: oxirida kutilmagan burilish qo'shing." }];
+  }
+  function demoPosts() {
+    const P = (id, status, tier, cost, hook, views, likes, saves, shares, caption) => ({ id, status, tier, cost, hook, caption, hashtags: ["prava", "haydovchilik"], publish_at: "", score: views + 3 * likes + 12 * (saves + shares),
+      metrics: views ? { instagram: { views, likes, saves, comments: Math.round(likes / 5), shares } } : {}, video: null });
+    return [
+      P(7, "pending", "cinematic", 1.8, "Dadam kalitni berishdan oldin...", 0, 0, 0, 0, demoOverview().pending.caption),
+      P(6, "published", "cinematic", 1.8, "Oxirgi savol. 30 soniya qoldi", 3120, 210, 88, 41, "Oxirgi savolda 30 soniya qolganda nima qilasiz?\n\nIzohga \"30\" deb yozing. Shart emas desangiz, bitta layk yetarli."),
+      P(5, "published", "light", 0.02, "Siz bo'lganingizda kim birinchi o'tardi?", 960, 41, 19, 3, "Chorrahada svetofor yo'q. Kim birinchi o'tadi?"),
+      P(4, "published", "cinematic", 1.2, "Do'stlar bahsi: kim birinchi o'tadi?", 1840, 96, 31, 9, "Do'stingiz bilan bahslashing: kim birinchi o'tadi?")];
+  }
+  function demoFinance() {
+    return { video: 11.4, ai: 1.62, server: 4.6, total: 17.62, plan: 44.5, forecast: 22.8, video_budget: 30, ai_budget: 8, server_monthly: 6.5, new_users: 214, cost_per_user: 0.082, day: 24, days: 31,
+      text: "Shu oy sarflandi: 17.62$ (reja 45$). Video 11.40$, AI matn 1.62$, server 4.60$. Oy oxirigacha prognoz: 22.80$. 1 yangi foydalanuvchi narxi: 0.08$ (214 kishi).",
+      entries: [{ at: T0 - 86400, kind: "income", amount: 450000, currency: "UZS", note: "3 ta premium obuna" }, { at: T0 - 3 * 86400, kind: "expense", amount: 6.5, currency: "USD", note: "Hetzner server" }] };
+  }
+  function demoReports() {
+    return [{ id: 3, at: T0 - 3600 * 11, kind: "daily", title: "Kunlik hisobot", text: "Yangi foydalanuvchi: 22 (jami 187)\nQayerdan: TikTok 12, do'st taklifi 5, avtomaktab 3\nEng yaxshi video #6 — 3 120 ko'rish\nMoliya: 15.80$ sarflandi, prognoz 22.4$\nMarketolog: #5 kam — savolni 1-soniyaga olish tavsiya qilindi" },
+            { id: 2, at: T0 - 3600 * 35, kind: "manual", title: "Moliya hisoboti", text: "Shu oy sarflandi: 14.20$ (reja 45$)." }];
+  }
+  function demoCharts() {
+    const days = [], base = new Date();
+    for (let i = 29; i >= 0; i--) { const d = new Date(base); d.setDate(d.getDate() - i); const k = 29 - i;
+      days.push({ day: d.toISOString().slice(0, 10), users: Math.max(0, Math.round(2 + k * 0.8 + 4 * Math.sin(k / 2.3))), answers: Math.round(15 + k * 5.2 + 18 * Math.sin(k / 3)), spend: +(k % 2 ? 1.85 : 0.04 + (k % 5 === 0 ? 1.2 : 0)).toFixed(2) }); }
+    return { days, posts: demoPosts().filter((p) => p.status === "published").reverse().concat([{ id: 8, hook: "Mif yoki haqiqat: tunda yaqin chiroq", views: 2240, tier: "cinematic" }, { id: 9, hook: "Birinchi kalit", views: 4100, tier: "cinematic" }]).map((p) => ({ id: p.id, hook: p.hook, views: p.views ?? (p.metrics.instagram || {}).views ?? 0, tier: p.tier })),
+      sources: [{ label: "TikTok profil", count: 81 }, { label: "Do'st taklifi", count: 34 }, { label: "Yunusobod avtomaktabi", count: 31 }, { label: "Instagram profil", count: 29 }, { label: "Telegram kanal", count: 21 }, { label: "Guruh viktorinasi", count: 12 }] };
+  }
+
+  // ================= API =================
+  async function api(path, opts = {}) {
+    if (DEMO) throw new Error("demo");
+    const r = await fetch(path.replace(/^\//, ""), { method: opts.method || "GET", credentials: "same-origin",
+      headers: { "X-Panel": "1", ...(opts.body ? { "Content-Type": "application/json" } : {}) }, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    const ct = r.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) { const e = new Error("not-json"); e.status = r.status; throw e; }
+    const j = await r.json();
+    if (!r.ok) { const e = new Error(j.error || "Xato"); e.status = r.status; throw e; }
+    return j;
+  }
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 3200); }
+  async function act(path, body, okMsg) {
+    if (DEMO) { toast("Namuna rejim: serverda bu tugma haqiqatan ishlaydi"); return null; }
+    try { const r = await api(path, { method: "POST", body: body || {} }); toast(r.message || okMsg || "Bajarildi"); return r; }
+    catch (e) { if (e.status === 401) { showLogin(); return null; } toast(e.message); return null; }
+  }
+  const get = async (path, demo) => DEMO ? demo() : api(path).catch(() => demo === demoOverview ? null : (cache[path] || (Array.isArray(demo()) ? [] : {})));
+
+  // ================= umumiy komponentlar =================
+  const tierNames = { cinematic: "Kinematografik AI", light: "AI rasmlar", quiz: "Test-video" };
+  const statusNames = { pending: "Tasdiq kutyapti", approved: "Tasdiqlangan", published: "E'lon qilingan", rejected: "Rad etilgan", failed: "Xato", draft: "Qoralama", open: "Navbatda", done: "Bajarildi", cancelled: "Bekor" };
+  const tierPill = (t, c) => t ? `<span class="tier ${esc(t)}">${esc(tierNames[t] || t)}${c ? " · " + Number(c).toFixed(2) + "$" : ""}</span>` : "";
+  const statusPill = (s) => `<span class="status st-${esc(s)}">${esc(statusNames[s] || s)}</span>`;
+  const verdictPill = (v) => `<span class="status ${v === "yaxshi" ? "verdict-yaxshi" : v === "kam" ? "verdict-kam" : "verdict-o"}">${esc(v)}</span>`;
+  const when = (ts) => { const d = new Date(ts * 1000); return d.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit" }) + " " + d.toTimeString().slice(0, 5); };
+
+  function renderFeed(el, msgs) {
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    el.innerHTML = msgs.map((m) => {
+      const cls = m.sender === "ega" ? " owner" : m.recipient === "ega" ? " to-owner" : "";
+      return `<div class="msg${cls}" style="--c:${colorOf(m.sender)}"><div class="who"><b>${esc((AG[m.sender] || [m.sender])[0])}</b> → ${esc((AG[m.recipient] || [m.recipient])[0])} · ${new Date(m.at * 1000).toTimeString().slice(0, 5)}</div><div class="bubble">${esc(m.text)}</div></div>`;
+    }).join("") || `<div class="empty">Hozircha xabar yo'q. Birinchi rejali ish boshlanganda shu yerda ko'rinadi.</div>`;
+    if (nearBottom || !el.dataset.seen) { el.scrollTop = el.scrollHeight; el.dataset.seen = "1"; }
+  }
+  async function loadFeeds(page) {
+    let d;
+    if (DEMO) d = demoAgents();
+    else { try { d = await api("/api/agents?since=0"); } catch (e) { if (e.status === 401) showLogin(); return; } }
+    agents = d.agents; cache.strategy = d.strategy;
+    nav(); head(page);
+    document.querySelectorAll(`[data-view="${page}"] [data-feed]`).forEach((el) => {
+      const k = el.dataset.feed;
+      renderFeed(el, k === "all" ? d.messages : d.messages.filter((m) => m.sender === k || m.recipient === k));
+    });
+    if (page === "jamoa") team();
+    if (page === "direktor") hiredList();
+    if (page === "marketolog") strategy(DEMO ? demoStrategy() : d.strategy);
+  }
+
+  // ================= menyu va sarlavha =================
+  function nav() {
+    const act = Object.fromEntries(agents.map((a) => [a.key, a.active]));
+    let html = "", cur = currentPage();
+    const customs = agents.filter((a) => a.custom);
+    for (const [k, name, ico, ag, group] of PAGES) {
+      if (k === "hamkorlar" && customs.length) {
+        html += `<div class="group">Yangi Jarvislar</div>` + customs.map((a) => `<a style="--c:${colorOf(a.key)}" href="#${a.key}" data-page="${a.key}"${a.key === cur ? ' aria-current="page"' : ""}><span class="ico"><b>${esc(a.name[0] || "?")}</b></span><span class="lbl">${esc(a.name)}</span>${a.active ? '<span class="live"></span>' : ""}</a>`).join("");
+      }
+      if (group) html += `<div class="group">${group}</div>`;
+      html += `<a style="--c:${colorOf(ag || k)}" href="#${k}" data-page="${k}"${k === cur ? ' aria-current="page"' : ""}><span class="ico"><b>${esc(ico)}</b></span><span class="lbl">${esc(name)}</span>${ag && act[ag] ? '<span class="live" title="Ishlayapti"></span>' : ""}</a>`;
+    }
+    $("nav").innerHTML = html;
+  }
+  function head(page) {
+    const ca = agents.find((x) => x.key === page && x.custom);
+    const p = PAGES.find((x) => x[0] === page) || [page, ca ? ca.name : page, ca ? ca.name[0] : "?", page];
+    const a = agents.find((x) => x.key === p[3]);
+    const titles = { jamoa: ["Jamoa", "8 ta Jarvis va ularning suhbati"], grafiklar: ["Grafiklar", "O'sish, ko'rishlar, manbalar va xarajat dinamikasi"],
+      ulanishlar: ["Ulanishlar", "Instagram, TikTok va Telegram akkauntlari — parolsiz, rasmiy «Ulash» orqali"],
+      hamkorlar: ["Hamkorlar", "Blogerlar va avtomaktablar: havola, promo-kod, % ulush va shaxsiy kabinet"],
+      oquvchilar: ["O'quvchilar", "Botdagi o'qish tizimi: reja, imtihon simulyatsiyasi, tayyorlik va natijalar"],
+      boshqaruv: ["Boshqaruv", "Maqsadlar, Jarvislar samaradorligi, sinov rejimi va ogohlantirishlar"] };
+    const name = a ? a.name : titles[page][0], role = a ? a.role : titles[page][1];
+    const st = a ? (a.active ? `<span class="chip"><span class="dot on"></span>Ishlayapti: ${esc(a.doing || "")}</span>` : `<span class="chip"><span class="dot"></span>Dam olyapti${a.last_doing ? " · oxirgi ish: " + esc(a.last_doing) : ""}</span>`) : "";
+    $("pageHead").style.setProperty("--c", colorOf(p[3] || page));
+    $("pageHead").innerHTML = `<div class="av${a && a.active ? " on" : ""}"><b>${esc(p[2])}</b></div><div><h2>${esc(name)}</h2><div class="role">${esc(role)}</div></div><div class="right">${st}</div>`;
+  }
+
+  // ================= sahifalar =================
+  function team() {
+    const card = (a) => `<a class="agent${a.active ? " on" : ""}" style="--c:${colorOf(a.key)}" href="#${a.key}" data-page="${a.key}"><div class="top"><div class="av"><b>${esc((AG[a.key] || ["", (a.name || "?")[0]])[1])}</b></div>
+      <div style="min-width:0"><div class="nm">${esc(a.name)}</div><div class="rl">${esc(a.role)}</div></div></div>
+      <div class="st"><span class="dot${a.active ? " on" : ""}"></span>${a.active ? "Ishlayapti: " + esc(a.doing || "") : "Dam olyapti"}</div>
+      <div class="meta">${a.last_doing && !a.active ? "Oxirgi ish: " + esc(a.last_doing) + " · " : ""}bugun ${a.messages_today} xabar</div></a>`;
+    const by = Object.fromEntries(agents.map((a) => [a.key, a]));
+    const row = (keys) => keys.filter((k) => by[k]).map((k) => card(by[k])).join("");
+    $("team").innerHTML = `<div class="row3" style="grid-template-columns:minmax(0,1fr)">${row(["direktor"])}</div><div class="link-line" aria-hidden="true"></div>
+      <div class="row3">${row(["marketolog", "moliya", "hisobot"])}</div><div class="link-line" aria-hidden="true"></div>
+      <div class="row4">${row(["smm", "media", "studiya", "nashr"])}</div>`
+      + (agents.some((a) => a.custom) ? `<div class="link-line" aria-hidden="true"></div><div class="row4">${agents.filter((a) => a.custom).map(card).join("")}</div>` : "");
+  }
+  function direktor(d) {
+    const k = d.kpi;
+    $("kpis").innerHTML = [["Bugun yangi", k.today_users, `jami ${fmt(k.total_users)}`], ["7 kunda faol", k.active_week, "botdan foydalanganlar"],
+      ["Bugungi javoblar", k.answers_today, "bot + guruh"], ["7 kunda video", k.posts_week, `guruhda ${fmt(k.group_members)} a'zo`]]
+      .map(([l, v, s]) => `<div class="kpi"><span class="label">${l}</span><span class="value">${fmt(v)}</span><span class="sub">${esc(s)}</span></div>`).join("");
+    const p = d.pending;
+    if (!p) { $("pendingStatus").innerHTML = ""; $("review").innerHTML = `<div class="empty">Tasdiq kutayotgan video yo'q. Keyingi e'lon: ${esc(d.next_slot)}.</div>`; }
+    else {
+      $("pendingStatus").innerHTML = tierPill(p.tier, p.cost) + " " + statusPill(p.status);
+      const media = p.video ? `<video src="${esc(p.video)}" controls playsinline preload="metadata"></video>` : `<img src="${POSTER}" alt="Video yakuniy kadri">`;
+      $("review").innerHTML = `<div class="review"><div class="phone">${media}</div><div style="min-width:0">
+        <div class="hook">${esc(p.hook)}</div><div class="caption">${esc(p.caption)}</div>
+        <div class="tags">${(p.hashtags || []).map((t) => "#" + esc(t)).join(" ")}</div>
+        ${p.reason ? `<div class="reason"><strong>Nega shunday:</strong> ${esc(p.reason)}</div>` : ""}
+        <div class="actions">${p.status === "pending" ? `<button class="btn primary" data-act="approve" data-id="${p.id}">Tasdiqlash (${esc(p.publish_at || "keyingi slot")})</button>` : `<button class="btn primary" data-post="/api/publish-now">Hozir joylash</button>`}
+        <button class="btn" data-act="regenerate" data-id="${p.id}">Boshqa variant</button><button class="btn danger" data-act="reject" data-id="${p.id}">Rad etish</button></div></div></div>`;
+    }
+    $("autoToggle").checked = !!d.auto_publish;
+    const sch = d.schedule, hm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    const stops = [...sch.quiz.map((h) => [h * 60, "Guruhga viktorina", "k-quiz"]), ...sch.slots.map((m, i) => [m, `${i + 1}-video e'lon qilinadi`, "k-pub"]),
+      ...sch.slots.map((m, i) => [Math.max(0, m - sch.lead), `${i + 1}-video tayyorlanadi`, "k-video"]), [sch.report * 60 - 30, "Marketolog videolarni tahlil qiladi", "k-report"], [sch.report * 60, "Hisobotchi kunlik hisobot yuboradi", "k-report"]].sort((a, b) => a[0] - b[0]);
+    const t = d.now.slice(11).split(":"), nowM = +t[0] * 60 + +t[1];
+    let html = "", placed = false;
+    for (const [m, l, cls] of stops) { if (!placed && m > nowM) { html += `<li class="nowline"><time>${hm(nowM)}</time><span></span></li>`; placed = true; }
+      html += `<li class="${cls}${m <= nowM ? " past" : ""}"><time>${hm(m)}</time><i></i><span>${l}</span></li>`; }
+    $("road").innerHTML = html;
+  }
+  function strategy(st) {
+    if (!st || !st.summary) { $("strategy").innerHTML = `<div class="empty">Strategiya hali yo'q. Marketolog dushanba kuni yoki yuqoridagi tugma bilan tuzadi.</div>`; return; }
+    const list = (title, arr) => arr && arr.length ? `<h3 style="margin-top:14px">${title}</h3><ul style="margin:6px 0 0;padding-left:18px">${arr.map((x) => `<li style="margin-bottom:4px">${x}</li>`).join("")}</ul>` : "";
+    $("strategy").innerHTML = `<p style="margin:0;max-width:75ch">${esc(st.summary)}</p><div class="grid even" style="gap:6px 24px">
+      <div>${list("Kontent yo'nalishlari", (st.pillars || []).map(esc))}${list("Auditoriya", (st.audience || []).map((a) => `<b>${esc(a.segment)}</b>: ${esc(a.pain)}`))}</div>
+      <div>${list("Raqobatchilar", (st.competitors || []).map((c) => `<b>${esc(c.name)}</b>: ${esc(c.what)}; zaif tomoni: ${esc(c.weakness)}`))}${list("Taklif g'oyalari (qaror sizda)", (st.offer_ideas || []).map(esc))}</div></div>`;
+  }
+  async function marketolog() {
+    const rv = await get("/api/reviews", demoReviews);
+    $("reviews").innerHTML = rv.length ? rv.map((r) => `<div class="list-item"><div style="min-width:0"><div>${verdictPill(r.verdict)} <span class="num" style="color:var(--muted);font-size:13px">#${r.post_id} · ${when(r.at)}</span></div><div style="margin-top:6px">${esc(r.text)}</div></div></div>`).join("")
+      : `<div class="empty">Hali tahlil yo'q. Video joylanganidan 36 soat o'tgach, Marketolog uni o'zi tahlil qiladi.</div>`;
+  }
+  async function smm() {
+    const ps = (await get("/api/posts", demoPosts)).filter((p) => p.caption).slice(0, 6);
+    $("captions").innerHTML = ps.length ? ps.map((p) => `<div class="list-item"><div style="min-width:0;width:100%"><div>${statusPill(p.status)} <span class="num" style="color:var(--muted);font-size:13px">#${p.id}</span></div><div style="font-weight:600;margin:6px 0 4px">${esc(p.hook)}</div><div class="caption">${esc(p.caption)}</div><div class="tags">${(p.hashtags || []).map((t) => "#" + esc(t)).join(" ")}</div></div></div>`).join("")
+      : `<div class="empty">Hali post matni yo'q.</div>`;
+  }
+  async function moliya(d) {
+    const f = await get("/api/finance", demoFinance);
+    if (!f || f.total === undefined) return;
+    $("finGrid").innerHTML = [["Shu oy sarflandi", `${f.total.toFixed(2)}$`, `reja ${f.plan.toFixed(0)}$`], ["Oy oxirigacha prognoz", `${f.forecast.toFixed(2)}$`, f.forecast > f.plan ? "rejadan oshyapti" : "reja ichida"],
+      ["1 yangi odam narxi", f.cost_per_user != null ? `${f.cost_per_user.toFixed(2)}$` : "—", `${fmt(f.new_users)} kishi shu oy`]]
+      .map(([l, v, s]) => `<div class="kpi"><span class="label">${l}</span><span class="value">${v}</span><span class="sub">${s}</span></div>`).join("");
+    $("finText").textContent = f.text;
+    const pct = Math.min(100, f.total / (f.plan || 1) * 100);
+    $("finMeter").style.width = pct + "%"; $("finMeter").style.background = f.forecast > f.plan ? "var(--warn)" : "var(--good)";
+    $("finRows").innerHTML = [["AI video", `${f.video.toFixed(2)}$ / ${f.video_budget}$`], ["AI matn (Claude)", `${f.ai.toFixed(2)}$ / ${f.ai_budget}$`], ["Server (shu kungacha)", `${f.server.toFixed(2)}$ / ${f.server_monthly}$`], ["Oy kuni", `${f.day} / ${f.days}`]]
+      .map(([a, b]) => `<div class="row"><span>${a}</span><span class="num">${b}</span></div>`).join("");
+    $("ledger").innerHTML = (f.entries || []).map((e) => `<div class="list-item"><div style="min-width:0">${e.kind === "income" ? "Kirim" : "Xarajat"} · ${when(e.at)}<br><code>${esc(e.note || "")}</code></div><b class="num" style="color:${e.kind === "income" ? "var(--good)" : "var(--bad)"};white-space:nowrap">${e.kind === "income" ? "+" : "−"}${fmt(e.amount)} ${esc(e.currency)}</b></div>`).join("") || `<div class="empty">Hali yozuv yo'q.</div>`;
+    const v = d.video_budget;
+    if (v) {
+      const vp = Math.min(100, v.spent / (v.monthly || 1) * 100);
+      $("vMeter").style.width = vp + "%";
+      $("vRows").innerHTML = [["Sarflandi", `${v.spent.toFixed(2)}$ / ${v.monthly}$`], ["Bugungacha ruxsat", `${Math.max(0, v.allowance_today).toFixed(2)}$`], ["1 ta kinematografik", `≈ ${v.cinematic_cost.toFixed(2)}$`], ["Oy oxirigacha", `${v.days_left} kun`]]
+        .map(([a, b]) => `<div class="row"><span>${a}</span><span class="num">${b}</span></div>`).join("") + (v.enabled ? "" : `<div class="row"><span style="color:var(--warn)">FAL_KEY kiritilmagan, faqat bepul test-videolar</span></div>`);
+      if (document.activeElement !== $("budgetUsd")) $("budgetUsd").value = v.monthly;
+    }
+  }
+  function media(d) {
+    const list = d.sources;
+    const max = Math.max(1, ...list.map((s) => s.week));
+    $("sources").innerHTML = list.length ? `<table><thead><tr><th>Manba</th><th>7 kun</th><th class="r">Jami</th><th class="r">Test yechgan</th></tr></thead><tbody>${list.map((s) => `<tr><td>${esc(s.label)}<div style="font-size:12px;color:var(--muted);font-family:var(--font-data)">${esc(s.code)}</div></td><td><div class="share"><div class="track"><div style="width:${s.week / max * 100}%"></div></div><span class="num">${fmt(s.week)}</span></div></td><td class="r num">${fmt(s.total)}</td><td class="r num">${s.total ? Math.round(s.active / s.total * 100) : 0}%</td></tr>`).join("")}</tbody></table>`
+      : `<div class="empty">Hali foydalanuvchi yo'q.</div>`;
+    $("links").innerHTML = d.links.map((l) => `<div class="list-item"><div style="min-width:0">${esc(l.label)}<br><code>${esc(l.url || l.code)}</code></div><button class="btn" type="button" data-copy="${esc(l.url || l.code)}">Nusxa</button></div>`).join("");
+    const hq = d.hard_questions || [];
+    $("hard").innerHTML = hq.length ? hq.map((h) => `<div class="list-item"><span style="min-width:0">${esc(h.text)}</span><span class="num" style="color:var(--bad);white-space:nowrap">${Math.round(h.wrong_rate * 100)}% xato</span></div>`).join("") : `<div class="empty">Ma'lumot yig'ilmoqda.</div>`;
+  }
+  async function studiya(d) {
+    $("nextSlot").textContent = d.next_slot || "";
+    const tn = d.tasks || [];
+    $("tasks").innerHTML = tn.map((t) => `<div class="list-item"><div style="min-width:0">${statusPill(t.status)} ${t.source === "marketolog" ? '<span class="tier">Marketolog</span> ' : ""}${esc(t.text)}${t.post_id ? ` <span style="color:var(--muted)">→ #${t.post_id}</span>` : ""}</div>${t.status === "open" ? `<button class="btn" type="button" data-cancel="${t.id}">Bekor</button>` : ""}</div>`).join("");
+    const ps = await get("/api/posts", demoPosts);
+    $("posts").innerHTML = ps.length ? ps.map((p) => {
+      const ms = Object.entries(p.metrics || {}).map(([pl, m]) => `<span>${esc(pl)}: <b>${fmt(m.views)}</b> ko'rish · <b>${fmt(m.saves)}</b> saqlash · <b>${fmt(m.shares)}</b> ulashish</span>`).join("");
+      return `<div class="post"><div class="thumb">${p.video ? `<video src="${esc(p.video)}" preload="metadata" muted playsinline controls></video>` : `<img src="${POSTER}" alt="">`}</div><div style="min-width:0">
+        <div>${statusPill(p.status)} ${tierPill(p.tier, p.cost)} <span class="num" style="color:var(--muted);font-size:13px">#${p.id}${p.publish_at ? " · " + esc(p.publish_at) : ""}${p.score ? " · " + fmt(p.score) + " ball" : ""}</span></div>
+        <div class="title">${esc(p.hook)}</div><div class="mgrid">${ms || "<span>Metrika hali yo'q</span>"}</div>
+        ${p.status === "pending" ? `<div class="actions"><button class="btn primary" data-act="approve" data-id="${p.id}">Tasdiqlash</button><button class="btn danger" data-act="reject" data-id="${p.id}">Rad etish</button></div>` : ""}</div></div>`;
+    }).join("") : `<div class="empty">Hali video yo'q.</div>`;
+  }
+  async function nashr(d) {
+    const p = d.platforms;
+    const row = (n, on) => `<div class="row"><span>${n}</span><span><span class="dot ${on ? "good" : ""}" style="display:inline-block;margin-right:6px"></span>${on ? "ulangan" : "ulanmagan"}</span></div>`;
+    $("platforms").innerHTML = row("Telegram kanal", p.telegram) + row("PRAVA QUIZ guruhi", p.group) + row("Instagram Reels", p.instagram) + row("TikTok", p.tiktok);
+    const ps = await get("/api/posts", demoPosts);
+    const q = ps.filter((x) => ["pending", "approved", "published", "failed"].includes(x.status)).slice(0, 12);
+    $("queue").innerHTML = q.length ? q.map((x) => `<div class="list-item"><div style="min-width:0">${statusPill(x.status)} <b>#${x.id}</b> ${esc(x.hook)}${x.error && x.status === "failed" ? `<div style="color:var(--bad);font-size:13px">${esc(x.error)}</div>` : ""}</div><span class="num" style="color:var(--muted);white-space:nowrap">${esc(x.publish_at || "")}</span></div>`).join("") : `<div class="empty">Navbat bo'sh.</div>`;
+  }
+  async function hisobot() {
+    const rs = await get("/api/reports", demoReports);
+    const kinds = { daily: "Kunlik", weekly: "Haftalik", manual: "So'rov bo'yicha" };
+    $("reports").innerHTML = rs.length ? rs.map((r, i) => `<details class="rep"${i === 0 ? " open" : ""}><summary><span>${esc(r.title || kinds[r.kind])}</span><span class="num" style="color:var(--muted);font-weight:400">${when(r.at)}</span></summary><pre>${esc((r.text || "").replace(/<[^>]+>/g, ""))}</pre></details>`).join("") : `<div class="empty">Hali hisobot yo'q. Kunlik hisobot har kuni 22:00 da keladi.</div>`;
+  }
+
+  // ---------- hamkorlar ----------
+  function demoPartners() {
+    const mk = (code, name, kind, percent, promo, users, act, pays, earned, paid) => ({ code, name, kind, percent, promo, users, active_week: act, payments: pays, earned, paid, balance: earned - paid, active: 1,
+      bot_link: `https://t.me/ChorrahaBot?start=p_${code}`, site_link: `https://chorrahaa.uz?utm_source=partner&utm_campaign=${code}`, portal: `https://panel.chorrahaa.uz/p/namuna_${code}`, conversion: users ? +(pays / users * 100).toFixed(1) : 0 });
+    return { partners: [mk("avto_yunusobod", "Yunusobod avtomaktabi", "avtomaktab", 15, "YUNUS15", 31, 18, 6, 89100, 50000), mk("ali_blog", "Ali Blog", "bloger", 20, "ALI20", 54, 22, 9, 178200, 0)],
+      payments: [{ id: 3, tg_id: 5512, amount: 99000, currency: "UZS", partner: "ali_blog", commission: 19800, note: "premium", at: T0 - 7200 }, { id: 2, tg_id: 4410, amount: 99000, currency: "UZS", partner: null, commission: 0, note: "premium", at: T0 - 90000 }],
+      contest: "🏆 Oylik konkurs — eng ko'p do'st taklif qilgan 3 kishi mukofot oladi.\n🥇 Sardor — 7\n🥈 Malika — 5\n🥉 Bekzod — 4" };
+  }
+  async function hamkorlar() {
+    const d = await get("/api/partners", demoPartners);
+    if (!d.partners) return;
+    const P = d.partners, sum = (k) => P.reduce((s, p) => s + (p[k] || 0), 0);
+    $("parKpis").innerHTML = [["Hamkorlar", P.filter((p) => p.active).length, "faol"], ["Ular orqali kelgan", sum("users"), `shu hafta faol ${fmt(sum("active_week"))}`],
+      ["Hamkor to'lovlari", sum("payments"), "jami"], ["To'lanishi kerak", fmt(sum("balance")) + " so'm", `jami ulush ${fmt(sum("earned"))}`]]
+      .map(([l, v, s]) => `<div class="kpi"><span class="label">${l}</span><span class="value">${typeof v === "number" ? fmt(v) : v}</span><span class="sub">${esc(s)}</span></div>`).join("");
+    $("parList").innerHTML = P.length ? P.map((p) => `<div class="list-item" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc(p.name)}</b> <span class="tier">${esc(p.kind)} · ${p.percent}%</span>${p.active ? "" : ' <span class="status st-rejected">o\'chiq</span>'}</div>
+      <span class="num" style="color:var(--muted)">${fmt(p.users)} odam · ${fmt(p.payments)} to'lov · konversiya ${p.conversion}%</span></div>
+      <div class="rows" style="margin-top:6px"><div class="row"><span>Ulush / to'langan / qoldiq</span><span class="num">${fmt(p.earned)} / ${fmt(p.paid)} / <b>${fmt(p.balance)}</b> so'm</span></div></div>
+      ${copyRow("Bot havolasi", p.bot_link)}${copyRow("Promo-kod", p.promo)}${copyRow("Hamkor kabineti (unga yuboring)", p.portal)}
+      <form class="inline" data-payout="${esc(p.code)}" style="margin-top:6px"><input type="number" min="1" step="any" placeholder="Hamkorga to'langan summa" aria-label="To'langan summa" required><button class="btn" type="submit">To'landi deb yozish</button>
+      <button class="btn${p.active ? " danger" : ""}" type="button" data-ptoggle="${esc(p.code)}" data-on="${p.active ? 0 : 1}">${p.active ? "To'xtatish" : "Yoqish"}</button></form></div>`).join("")
+      : `<div class="empty">Hali hamkor yo'q. O'ngdagi forma orqali bloger yoki avtomaktabni qo'shing.</div>`;
+    $("payList").innerHTML = (d.payments || []).slice(0, 8).map((x) => `<div class="list-item"><div style="min-width:0">${when(x.at)} · ID ${esc(x.tg_id || "—")}${x.partner ? ` · <span class="tier">${esc(x.partner)}</span> +${fmt(x.commission)}` : ""}<br><code>${esc(x.note || "")}</code></div><b class="num" style="color:var(--good);white-space:nowrap">${fmt(x.amount)} ${esc(x.currency)}</b></div>`).join("");
+    $("contest").textContent = (d.contest || "").replace(/<[^>]+>/g, "");
+  }
+
+  // ---------- o'quvchilar va boshqaruv ----------
+  function demoControl() {
+    return { dry_run: false, metrics: { users: "Yangi foydalanuvchilar", active: "Faol foydalanuvchilar (test yechgan)", referrals: "Do'st taklifi orqali kelganlar", payments: "To'lovlar soni", revenue: "Tushum (so'm)", posts: "E'lon qilingan videolar", views: "Videolar ko'rishlari", exams: "Imtihon simulyatsiyalari" },
+      goals: [{ metric: "users", name: "Yangi foydalanuvchilar", target: 500, value: 212, percent: 42, forecast: 527, on_track: true }, { metric: "payments", name: "To'lovlar soni", target: 40, value: 9, percent: 22, forecast: 22, on_track: false }],
+      efficiency: [["direktor", "Bosh direktor", 64, "12 topshiriq", .08], ["marketolog", "Marketolog", 31, "9 tahlil", .61], ["smm", "SMMchi", 28, "46 izohga javob", .05], ["moliya", "Moliya", 19, "7 yozuv", 0], ["media", "Media", 22, "84 o'lchov", 0], ["studiya", "Studiya", 40, "14 video (rad: 1, o'rtacha baho 7.6)", 12.4], ["nashr", "Nashr", 15, "13 e'lon", 0], ["hisobot", "Hisobotchi", 9, "8 hisobot", 0]].map(([key, name, messages, output, usd]) => ({ key, name, messages, output, usd })),
+      categories: [{ kind: "expense", category: "reklama", currency: "UZS", s: 450000 }, { kind: "expense", category: "server", currency: "USD", s: 6.5 }, { kind: "income", category: "tolov", currency: "UZS", s: 891000 }],
+      learning: { with_exam_date: 74, active_streaks: 38, avg_readiness: 46, exams_week: 129, exam_pass_rate: 41, duels_week: 17, passed_real: 12, failed_real: 4, bank: 1276 } };
+  }
+  async function oquvchilar() {
+    const c = await get("/api/control", demoControl);
+    const L = c.learning; if (!L) return;
+    $("learnKpis").innerHTML = [["O'rtacha tayyorlik", L.avg_readiness + "%", "oxirgi 14 kun faollar"], ["Imtihon sanasini kiritgan", fmt(L.with_exam_date), "shaxsiy reja oladi"],
+      ["Simulyatsiya, 7 kun", fmt(L.exams_week), `o'tish ${L.exam_pass_rate || 0}%`], ["3+ kun ketma-ket", fmt(L.active_streaks), `duellar: ${fmt(L.duels_week)}`]]
+      .map(([l, v, s]) => `<div class="kpi"><span class="label">${l}</span><span class="value">${v}</span><span class="sub">${esc(s)}</span></div>`).join("");
+    const tot = L.passed_real + L.failed_real;
+    $("learnReal").innerHTML = [["O'tdi", fmt(L.passed_real)], ["O'tmadi", fmt(L.failed_real)], ["O'tish darajasi", tot ? Math.round(L.passed_real / tot * 100) + "%" : "—"], ["Savollar bazasi", fmt(L.bank)]]
+      .map(([a, b]) => `<div class="row"><span>${a}</span><span class="num">${b}</span></div>`).join("");
+  }
+  async function boshqaruv() {
+    const c = await get("/api/control", demoControl);
+    if (!c.metrics) return;
+    $("dryToggle").checked = !!c.dry_run;
+    if (!$("goalMetric").options.length) $("goalMetric").innerHTML = Object.entries(c.metrics).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join("");
+    $("goals").innerHTML = c.goals.length ? c.goals.map((g) => `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span>${esc(g.name)}</span><span class="num">${fmt(g.value)} / ${fmt(g.target)} · ${g.percent}%</span></div>
+      <div class="meter" style="margin-top:6px"><div style="width:${Math.min(100, g.percent)}%;background:${g.on_track ? "var(--good)" : "var(--warn)"}"></div></div><div style="font-size:12px;color:var(--muted);margin-top:4px">Oy oxiriga prognoz: ${fmt(g.forecast)} ${g.on_track ? "— maqsadga yetadi" : "— hozirgi sur'atda yetmaydi"}</div></div>`).join("")
+      : `<div class="empty">Bu oy uchun maqsad yo'q. Pastdan qo'shing — ertalabki brifda progress chiqadi.</div>`;
+    $("eff").innerHTML = `<table><thead><tr><th>Jarvis</th><th>Natija</th><th class="r">Xabar</th><th class="r">Xarajat</th></tr></thead><tbody>${c.efficiency.map((r) => `<tr><td>${esc(r.name)}</td><td>${esc(r.output)}</td><td class="r num">${fmt(r.messages)}</td><td class="r num">${Number(r.usd).toFixed(2)}$</td></tr>`).join("")}</tbody></table>`;
+  }
+  async function smmExtra() {
+    const d = await get("/api/smm", () => ({ instagram: true, today: 46, limit_day: 150,
+      comments: [{ username: "aziza_02", text: "Zo'r, qizil chiroqda men ham adashganman", action: "replied", reply: "Ko'pchilik shu yerda adashadi. Botda shu mavzuda alohida test bor 🙌", at: T0 - 1800 },
+        { username: "bek_uz", text: "test", action: "dm", reply: "DM: bot havolasi yuborildi", at: T0 - 3600 }, { username: "nodir", text: "Narxi qancha?", action: "escalated", reply: null, at: T0 - 5400 }],
+      hashtags: [{ tag: "prava", posts: 9, avg_views: 2140 }, { tag: "avtomaktab", posts: 6, avg_views: 1870 }, { tag: "toshkent", posts: 5, avg_views: 990 }, { tag: "rek", posts: 4, avg_views: 610 }],
+      quality: [{ id: 7, hook: "Dadam kalitni berishdan oldin...", quality: 8, quality_note: "hook kuchli; CTA aniq", status: "pending" }, { id: 6, hook: "Svetofor sirlari", quality: 5, quality_note: "birinchi 2 soniya sust → qayta yasaldi", status: "rejected" }] }));
+    if (!d.comments) return;
+    const an = { replied: ["Javob berildi", "approved"], dm: ["DM yuborildi", "published"], escalated: ["Sizga yuborildi", "pending"], skipped: ["O'tkazildi", "draft"], dry: ["Sinov", "draft"], failed: ["Xato", "failed"] };
+    $("igc").innerHTML = (d.instagram ? "" : `<div class="empty">Instagram ulanmagan — Ulanishlar sahifasidan ulang.</div>`) + (d.comments.length ? `<div style="font-size:13px;color:var(--muted);margin-bottom:6px">Bugun ${fmt(d.today)} / ${fmt(d.limit_day)} javob</div>` + d.comments.slice(0, 12).map((c) => { const a = an[c.action] || [c.action, "draft"];
+      return `<div class="list-item" style="display:block"><div><span class="status st-${a[1]}">${esc(a[0])}</span> <b>@${esc(c.username)}</b> <span class="num" style="color:var(--muted);font-size:12px">${when(c.at)}</span></div><div style="margin-top:4px">${esc(c.text)}</div>${c.reply ? `<div style="margin-top:4px;color:var(--muted);font-size:14px">↳ ${esc(c.reply)}</div>` : ""}</div>`; }).join("") : (d.instagram ? `<div class="empty">Hali izoh yo'q.</div>` : ""));
+    $("tags").innerHTML = d.hashtags.length ? `<table><thead><tr><th>Hashtag</th><th class="r">Post</th><th class="r">O'rtacha ko'rish</th></tr></thead><tbody>${d.hashtags.slice(0, 10).map((h) => `<tr><td>#${esc(h.tag)}</td><td class="r num">${h.posts}</td><td class="r num">${fmt(h.avg_views)}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">Videolar raqami yig'ilgach chiqadi.</div>`;
+    $("quality").innerHTML = d.quality.length ? d.quality.map((q) => `<div class="list-item"><div style="min-width:0"><b>#${q.id}</b> ${esc(q.hook || "")}<div style="color:var(--muted);font-size:13px">${esc(q.quality_note || "")}</div></div><b class="num" style="white-space:nowrap;color:${q.quality >= 6 ? "var(--good)" : "var(--warn)"}">${Number(q.quality).toFixed(0)}/10</b></div>`).join("") : `<div class="empty">Har yangi video e'londan oldin 1–10 baho oladi; 6 dan past bo'lsa bir marta qayta yasaladi.</div>`;
+  }
+  async function ledgerCats() {
+    const c = await get("/api/control", demoControl);
+    const names = { reklama: "Reklama", server: "Server", ai: "AI", hamkor: "Hamkor ulushi", maosh: "Maosh", tolov: "Foydalanuvchi to'lovlari", tushum: "Boshqa kirim", boshqa: "Boshqa" };
+    $("ledCats").innerHTML = (c.categories || []).map((x) => `<div class="row"><span>${x.kind === "income" ? "Kirim" : "Xarajat"} · ${esc(names[x.category] || x.category)}</span><span class="num" style="color:${x.kind === "income" ? "var(--good)" : "var(--bad)"}">${fmt(x.s)} ${esc(x.currency)}</span></div>`).join("");
+  }
+
+  // ---------- yangi Jarvislar ----------
+  let customKey = null;
+  async function customPage(key) {
+    customKey = key;
+    const a = agents.find((x) => x.key === key);
+    $("customRole").textContent = a ? a.role : "";
+    let d; try { d = DEMO ? demoAgents() : await api(`/api/agents?since=0&agent=${key}`); } catch (_) { return; }
+    renderFeed($("customFeed"), d.messages.filter((m) => m.sender === key || m.recipient === key));
+  }
+  function hiredList() {
+    const cs = agents.filter((a) => a.custom);
+    $("hired").innerHTML = cs.map((a) => `<div class="list-item"><div style="min-width:0"><a href="#${a.key}" data-page="${a.key}" style="color:inherit;font-weight:600">${esc(a.name)}</a><br><span style="color:var(--muted);font-size:13px">${esc(a.role)}${a.daily_hour != null ? " · har kuni " + String(a.daily_hour).padStart(2, "0") + ":00" : ""}</span></div></div>`).join("");
+  }
+
+  // ---------- ulanishlar ----------
+  function demoConn() {
+    return { instagram: { connected: true, username: "chorraha.uz", expires_days: 52, app_ready: true, redirect_uri: "https://panel.chorrahaa.uz/oauth/instagram/callback" },
+      tiktok: { connected: false, username: null, app_ready: false, privacy: "SELF_ONLY", redirect_uri: "https://panel.chorrahaa.uz/oauth/tiktok/callback" },
+      telegram: { bot: { username: "ChorrahaBot", ok: true }, channel: { chat_id: "-1001234567890", title: "Chorraha | Prava testlari" }, group: null,
+        chats: [{ chat_id: "-1001234567890", title: "Chorraha | Prava testlari", type: "channel", is_admin: 1 }, { chat_id: "-1009876543210", title: "PRAVA QUIZ", type: "supergroup", is_admin: 1 }] },
+      media_url: true, last: null };
+  }
+  const copyRow = (label, val) => `<div class="list-item"><div style="min-width:0">${label}<br><code>${esc(val)}</code></div><button class="btn" type="button" data-copy="${esc(val)}">Nusxa</button></div>`;
+  function oauthCard(el, key, name, c, steps) {
+    const ok = c.connected;
+    let html = `<div class="card-head"><h2>${name}</h2><span class="chip"><span class="dot ${ok ? "good" : ""}"></span>${ok ? "Ulangan" : "Ulanmagan"}</span></div>`;
+    if (ok) {
+      html += `<div class="rows">${c.username ? `<div class="row"><span>Akkaunt</span><b>@${esc(c.username)}</b></div>` : ""}${c.expires_days != null ? `<div class="row"><span>Ruxsat muddati</span><span class="num">${c.expires_days} kun (o'zi yangilanadi)</span></div>` : ""}${c.privacy ? `<div class="row"><span>Joylash rejimi</span><span>${c.privacy === "SELF_ONLY" ? "faqat siz ko'rasiz (audit kutilmoqda)" : "hammaga ochiq"}</span></div>` : ""}</div>
+        <div class="actions"><button class="btn" type="button" data-connect="${key}">Qayta ulash</button><button class="btn danger" type="button" data-disconnect="${key}">Uzish</button></div>`;
+    } else if (c.app_ready) {
+      html += `<p style="margin:0;color:var(--muted);font-size:14px">Bir marta bosasiz, ${name} sahifasida ruxsat berasiz — tamom.</p><div class="actions"><button class="btn primary" type="button" data-connect="${key}">${name}ni ulash</button></div>`;
+    } else {
+      html += `<p style="margin:0 0 8px;font-size:14px">«Ulash» tugmasi ishlashi uchun bir martalik sozlash kerak (10–15 daqiqa):</p><ol style="margin:0;padding-left:20px;font-size:14px;line-height:1.6">${steps.map((x) => `<li>${x}</li>`).join("")}</ol>${copyRow("Qaytish manzili (Redirect URI) — shu manzilni nusxalab, ilova sozlamasiga qo'ying", c.redirect_uri)}`;
+    }
+    el.innerHTML = html;
+  }
+  async function ulanishlar() {
+    const c = await get("/api/connections", demoConn);
+    if (!c.telegram) return;
+    $("connLast").hidden = !c.last; $("connLast").textContent = c.last || "";
+    oauthCard($("cIG"), "instagram", "Instagram", c.instagram, [
+      "Instagram akkauntni <b>professional</b> (Business yoki Creator) qiling: Sozlamalar → Akkaunt turi.",
+      "developers.facebook.com → <b>Create App</b> → turi «Business» → «Instagram» mahsulotini qo'shing → «API setup with Instagram login».",
+      "«Business login settings» ga pastdagi qaytish manzilini qo'ying.",
+      "App ID va App Secret ni serverdagi <code>.env</code> ga yozing: <code>IG_APP_ID</code>, <code>IG_APP_SECRET</code>, keyin <code>sudo systemctl restart zft</code>.",
+      "Shu sahifaga qaytib «Instagramni ulash» ni bosing."]);
+    oauthCard($("cTT"), "tiktok", "TikTok", c.tiktok, [
+      "developers.tiktok.com → <b>Manage apps</b> → Connect an app.",
+      "Mahsulotlar: <b>Login Kit</b> va <b>Content Posting API</b> (Direct Post). Scope: user.info.basic, video.publish, video.list.",
+      "Redirect URI ga pastdagi manzilni qo'ying va ilovani tekshiruvga yuboring.",
+      "Client key va Client secret ni <code>.env</code> ga yozing: <code>TIKTOK_CLIENT_KEY</code>, <code>TIKTOK_CLIENT_SECRET</code>, keyin xizmatni qayta ishga tushiring.",
+      "Tekshiruv o'tguncha videolar faqat sizga ko'rinadigan bo'lib chiqadi — bu TikTok qoidasi."]);
+    const t = c.telegram;
+    const sel = (role, cur) => cur ? `<div class="row"><span>${role === "channel" ? "Kanal" : "Guruh"}</span><span><b>${esc(cur.title || cur.chat_id)}</b> <button class="btn" type="button" data-tgoff="${role}" style="padding:4px 10px;margin-left:6px">Olib tashlash</button></span></div>` : `<div class="row"><span>${role === "channel" ? "Kanal" : "Guruh"}</span><span style="color:var(--warn)">tanlanmagan</span></div>`;
+    $("cTG").innerHTML = `<div class="card-head"><h2>Telegram</h2><span class="chip"><span class="dot ${t.bot.ok ? "good" : "bad"}"></span>${t.bot.ok ? "Bot: @" + esc(t.bot.username) : "BOT_TOKEN kiritilmagan"}</span></div>
+      <div class="grid even" style="gap:18px"><div>
+        <h3>Qanday ulanadi</h3><ol style="margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.6">
+          <li>Kanal yoki guruh sozlamalarida <b>Administratorlar → Admin qo'shish</b> → @${esc(t.bot.username || "bot")} ni toping.</li>
+          <li>Xabar yuborish (kanalda: «Post joylash») huquqini bering va saqlang.</li>
+          <li>Bot o'zi aniqlaydi — o'ng tomonda paydo bo'ladi. «Kanal» yoki «Guruh» deb tanlang.</li></ol>
+        <div class="rows" style="margin-top:14px">${sel("channel", t.channel)}${sel("group", t.group)}</div>
+      </div><div><h3>Bot admin bo'lgan chatlar</h3>${t.chats.length ? t.chats.map((ch) => `<div class="list-item"><div style="min-width:0"><b>${esc(ch.title)}</b><br><code>${esc(ch.type)} · ${esc(ch.chat_id)}${ch.is_admin ? "" : " · admin emas"}</code></div><div class="actions" style="margin:0">${ch.type === "channel" ? `<button class="btn" type="button" data-tguse="${esc(ch.chat_id)}" data-role="channel">Kanal sifatida</button>` : `<button class="btn" type="button" data-tguse="${esc(ch.chat_id)}" data-role="group">Guruh sifatida</button>`}</div></div>`).join("") : `<div class="empty">Hozircha yo'q. Botni kanal yoki guruhga admin qilib qo'shing — shu yerda o'zi chiqadi.</div>`}</div></div>
+      ${c.media_url ? "" : `<div class="demo" style="margin:14px 0 0"><strong>Eslatma.</strong><span>Instagram va TikTok videoni ochiq manzildan oladi: <code>PUBLIC_MEDIA_URL</code> (README, 5-qadam) sozlanmagan.</span></div>`}`;
+  }
+
+  // ---------- grafiklar ----------
+  function axisChart({ el, labels, bars, line, barColor = "var(--sign)", lineColor = "var(--info)", H = 230, W = 760, note = "" }) {
+    const pl = 40, pr = line ? 44 : 14, pt = 14, pb = 30, iw = W - pl - pr, ih = H - pt - pb, n = labels.length, bw = iw / n;
+    const nice = (v) => { const m = Math.max(4, v); const p = Math.pow(10, Math.floor(Math.log10(m))); const s = [1, 2, 2.5, 5, 10].find((k) => k * p * 4 >= m) * p; return s * 4; };
+    const mb = nice(Math.max(...bars)), ml = line ? nice(Math.max(...line)) : 1;
+    let g = "";
+    for (let i = 0; i <= 4; i++) { const y = pt + ih - i / 4 * ih;
+      g += `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pl - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--font-data)">${+(mb * i / 4).toFixed(2)}</text>`;
+      if (line) g += `<text x="${W - pr + 6}" y="${y + 4}" font-size="11" fill="${lineColor}" font-family="var(--font-data)">${Math.round(ml * i / 4)}</text>`; }
+    const b = bars.map((v, i) => { const h = v / mb * ih; return `<rect class="bar" style="--i:${i}" x="${(pl + i * bw + bw * .17).toFixed(1)}" y="${(pt + ih - h).toFixed(1)}" width="${(bw * .66).toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="${barColor}" fill-opacity="${i === n - 1 ? 1 : .78}"><title>${esc(labels[i])}: ${v}</title></rect>`; }).join("");
+    let l = "";
+    if (line) { const pts = line.map((v, i) => `${(pl + i * bw + bw / 2).toFixed(1)},${(pt + ih - v / ml * ih).toFixed(1)}`);
+      l = `<polyline pathLength="1" points="${pts.join(" ")}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round"/>`; const lp = pts[pts.length - 1].split(",");
+      l += `<circle cx="${lp[0]}" cy="${lp[1]}" r="4.5" fill="${lineColor}" stroke="var(--surface)" stroke-width="2"/>`; }
+    const step = Math.ceil(n / 10);
+    const xl = labels.map((s, i) => (i % step === 0 || i === n - 1) ? `<text x="${(pl + i * bw + bw / 2).toFixed(1)}" y="${H - 9}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--font-data)">${esc(s)}</text>` : "").join("");
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(note)}">${g}${b}${l}${xl}</svg>${note ? `<div class="note">${note}</div>` : ""}`;
+  }
+  function hbars(el, items) {
+    const max = Math.max(1, ...items.map((x) => x.count));
+    el.innerHTML = items.map((x) => `<div style="display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 44px;gap:10px;align-items:center;margin:8px 0;font-size:14px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.label)}</span><div class="share"><div class="track" style="height:12px"><div style="width:${x.count / max * 100}%"></div></div></div><span class="num" style="text-align:right">${fmt(x.count)}</span></div>`).join("") || `<div class="empty">Ma'lumot yo'q.</div>`;
+  }
+  async function grafiklar() {
+    const c = await get("/api/charts", demoCharts);
+    if (!c.days) return;
+    const lab = c.days.map((d) => `${d.day.slice(8)}.${d.day.slice(5, 7)}`);
+    const tu = c.days.reduce((s, d) => s + d.users, 0), last7 = c.days.slice(-7).reduce((s, d) => s + d.users, 0), prev7 = c.days.slice(-14, -7).reduce((s, d) => s + d.users, 0);
+    axisChart({ el: $("chUsers"), labels: lab, bars: c.days.map((d) => d.users), line: c.days.map((d) => d.answers),
+      note: `30 kunda ${fmt(tu)} yangi odam. Oxirgi 7 kun: <b class="num">${last7}</b>${prev7 ? `, oldingi haftadan ${last7 >= prev7 ? "+" : ""}${Math.round((last7 - prev7) / prev7 * 100)}%` : ""}.` });
+    const ps = c.posts || [];
+    if (ps.length) {
+      const best = ps.reduce((a, b) => (b.views > a.views ? b : a), ps[0]);
+      axisChart({ el: $("chViews"), labels: ps.map((p) => "#" + p.id), bars: ps.map((p) => p.views), barColor: "var(--a-studiya)", H: 260, W: 440, note: `Eng ko'p ko'rilgan: #${best.id} «${esc(best.hook)}» — ${fmt(best.views)}.` });
+    } else $("chViews").innerHTML = `<div class="empty">Joylangan video raqamlari hali yo'q.</div>`;
+    hbars($("chSources"), c.sources || []);
+    const sp = c.days.map((d) => d.spend), tot = sp.reduce((a, b) => a + b, 0);
+    axisChart({ el: $("chSpend"), labels: lab, bars: sp, barColor: "var(--warn)", H: 200, note: `30 kunda jami ${tot.toFixed(2)}$ sarflandi (AI video va AI matn; server alohida).` });
+  }
+
+  // ================= yo'naltirish =================
+  const VIEWS = PAGES.map((p) => p[0]);
+  const isCustom = (k) => agents.some((a) => a.key === k && a.custom);
+  const currentPage = () => { const h = (location.hash || "#jamoa").slice(1); return VIEWS.includes(h) || isCustom(h) ? h : "jamoa"; };
+  async function showPage(page) {
+    const view = isCustom(page) ? "custom" : page;
+    document.querySelectorAll("[data-view]").forEach((s) => {
+      s.hidden = s.dataset.view !== view;
+      if (!s.hidden) { s.classList.remove("enter"); void s.offsetWidth; s.classList.add("enter"); }
+    });
+    if (view === "custom") { customPage(page); nav(); head(page); return; }
+    nav(); head(page);
+    if (!data) return;
+    if (page === "direktor") direktor(data);
+    if (page === "marketolog") marketolog();
+    if (page === "smm") { smm(); smmExtra(); }
+    if (page === "moliya") { moliya(data); ledgerCats(); }
+    if (page === "hamkorlar") hamkorlar();
+    if (page === "oquvchilar") oquvchilar();
+    if (page === "boshqaruv") boshqaruv();
+    if (page === "media") media(data);
+    if (page === "studiya") studiya(data);
+    if (page === "nashr") nashr(data);
+    if (page === "hisobot") hisobot();
+    if (page === "grafiklar") grafiklar();
+    if (page === "ulanishlar") ulanishlar();
+    loadFeeds(page);
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-page]");
+    if (a) { e.preventDefault(); const p = a.dataset.page; try { history.replaceState(null, "", "#" + p); } catch (_) {} showPage(p); }
+  });
+
+  async function load() {
+    let d;
+    try { d = await api("/api/overview"); DEMO = false; }
+    catch (e) { if (e.status === 401) return showLogin(); DEMO = true; d = demoOverview(); }
+    data = d;
+    $("loginView").hidden = true; $("appView").hidden = false;
+    $("demoBanner").hidden = !d.demo; $("sampleWarn").hidden = !d.sample_questions;
+    $("updated").textContent = "Yangilandi: " + d.now;
+    $("sideChips").textContent = d.auto_publish ? "Avtopilot yoqilgan" : "Har video tasdiqdan o'tadi";
+    if (DEMO) agents = demoAgents().agents;
+    showPage(currentPage());
+  }
+  function showLogin() { $("appView").hidden = true; $("loginView").hidden = false; $("pw").focus(); }
+
+  // ================= hodisalar =================
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); $("loginErr").textContent = "";
+    try { await api("/api/login", { method: "POST", body: { password: $("pw").value } }); $("pw").value = ""; load(); }
+    catch (err) { $("loginErr").textContent = err.message === "not-json" ? "Server javob bermadi" : err.message; }
+  });
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-act]");
+    if (b) { b.disabled = true; const m = { approve: "Tasdiqlandi", reject: "Rad etildi", regenerate: "Yangi variant tayyorlanmoqda" };
+      await act(`/api/posts/${b.dataset.id}/${b.dataset.act}`, {}, m[b.dataset.act]); b.disabled = false; if (!DEMO) load(); return; }
+    const p = e.target.closest("[data-post]");
+    if (p) { let body = {}; try { body = p.dataset.body ? JSON.parse(p.dataset.body) : {}; } catch (_) {} await act(p.dataset.post, body); return; }
+    const c = e.target.closest("[data-cancel]");
+    if (c) { if (await act(`/api/tasks/${c.dataset.cancel}/cancel`, {}, "Bekor qilindi")) load(); return; }
+    const cp = e.target.closest("[data-copy]");
+    if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); toast("Nusxa olindi"); } catch (_) { const r = document.createRange(); r.selectNodeContents(cp.parentElement.querySelector("code")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Belgilandi — nusxa oling"); } }
+  });
+  document.querySelectorAll("[data-chat]").forEach((f) => f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const inp = f.querySelector("input"), text = inp.value.trim(); if (!text) return;
+    const feed = f.parentElement.querySelector("[data-feed]");
+    if (DEMO) { const msgs = [...feed.querySelectorAll(".msg")].length; renderFeed(feed, [...demoAgents().messages.filter((m) => feed.dataset.feed === "all" || m.sender === "direktor" || m.recipient === "direktor"),
+      { id: 99, at: Date.now() / 1000, sender: "ega", recipient: "direktor", text }, { id: 100, at: Date.now() / 1000, sender: "direktor", recipient: "ega", text: "Namuna rejim: serverda men haqiqiy raqamlar bilan javob beraman va g'oyangizni Studiyaga topshiriq qilaman." }]); inp.value = ""; return; }
+    inp.value = ""; inp.disabled = true;
+    await act("/api/chat", { text }, "Bosh direktor javob berdi");
+    inp.disabled = false; inp.focus(); loadFeeds(currentPage());
+  }));
+  $("autoToggle").addEventListener("change", async (e) => { const on = e.target.checked; const r = await act("/api/auto", { on }, on ? "Avtopilot yoqildi" : "Har video tasdiqdan o'tadi"); if (!r) e.target.checked = !on; else load(); });
+  const IDEAS = ["Imtihon kunidagi hayajon (POV)", "Dadasi kalitni berishdan oldin sinaydi", "Chorrahada kim birinchi o'tadi?", "Do'stlar bahsi: kim birinchi o'tadi", "Haydovchilar orasidagi mif va haqiqat", "Birinchi mashina kaliti"];
+  $("ideas").innerHTML = IDEAS.map((t) => `<button type="button" class="idea">${esc(t)}</button>`).join("");
+  $("ideas").addEventListener("click", (e) => { const b = e.target.closest(".idea"); if (b) { $("taskText").value = b.textContent; $("taskText").focus(); } });
+  $("taskForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); const text = $("taskText").value.trim();
+    if (text.length < 5) { toast("Topshiriqni batafsilroq yozing"); return; }
+    if (await act("/api/tasks", { text, now: e.submitter ? e.submitter.dataset.now === "1" : false })) { $("taskText").value = ""; load(); }
+  });
+  for (let h = 6; h <= 23; h++) $("hireHour").insertAdjacentHTML("beforeend", `<option value="${h}">Har kuni ${String(h).padStart(2, "0")}:00 da</option>`);
+  $("hireForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const r = await act("/api/hire", { name: $("hireName").value.trim(), role: $("hireRole").value.trim(), daily_hour: $("hireHour").value || null });
+    if (r) { $("hireName").value = ""; $("hireRole").value = ""; await loadFeeds("direktor"); hiredList(); }
+  });
+  $("customForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); const text = $("customText").value.trim(); if (!text || !customKey) return;
+    $("customText").value = "";
+    const r = await act(`/api/agents/${customKey}/run`, { text }, "Bajarildi");
+    if (r) { await loadFeeds(customKey); customPage(customKey); }
+  });
+  $("fireBtn").addEventListener("click", async () => { if (!customKey) return; if (await act(`/api/agents/${customKey}/fire`, {}, "Chiqarildi")) { location.hash = "#direktor"; await loadFeeds("direktor"); showPage("direktor"); } });
+  document.addEventListener("click", async (e) => {
+    const c = e.target.closest("[data-connect]");
+    if (c) { if (DEMO) { toast("Namuna rejim: serverda Instagram/TikTok'ning ruxsat sahifasi ochiladi"); return; }
+      try { const r = await api(`/api/connections/${c.dataset.connect}/start`, { method: "POST", body: {} }); window.location.href = r.url; } catch (err) { toast(err.message); } return; }
+    const d = e.target.closest("[data-disconnect]");
+    if (d) { if (await act(`/api/connections/${d.dataset.disconnect}/disconnect`, {}, "Uzildi")) ulanishlar(); return; }
+    const u = e.target.closest("[data-tguse]");
+    if (u) { if (await act("/api/connections/telegram/use", { chat_id: u.dataset.tguse, role: u.dataset.role })) ulanishlar(); return; }
+    const o = e.target.closest("[data-tgoff]");
+    if (o) { if (await act("/api/connections/telegram/disconnect", { role: o.dataset.tgoff }, "Olib tashlandi")) ulanishlar(); }
+  });
+  $("budgetForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/budget", { usd: Number($("budgetUsd").value) })) load(); });
+  $("linkForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/links", { code: $("linkCode").value.trim(), label: $("linkLabel").value.trim() }, "Havola yaratildi")) { $("linkCode").value = ""; $("linkLabel").value = ""; load(); } });
+  $("parForm").addEventListener("submit", async (e) => { e.preventDefault();
+    if (await act("/api/partners", { name: $("parName").value.trim(), kind: $("parKind").value, percent: Number($("parPct").value), promo: $("parPromo").value.trim(), contact: $("parContact").value.trim() })) { ["parName", "parPromo", "parContact"].forEach((k) => ($(k).value = "")); hamkorlar(); } });
+  $("payForm").addEventListener("submit", async (e) => { e.preventDefault();
+    if (await act("/api/payments", { tg_id: $("payTg").value.trim(), amount: Number($("payAmount").value), note: $("payNote").value.trim() })) { ["payTg", "payAmount", "payNote"].forEach((k) => ($(k).value = "")); hamkorlar(); } });
+  document.addEventListener("submit", async (e) => { const f = e.target.closest("[data-payout]"); if (!f) return; e.preventDefault();
+    if (await act(`/api/partners/${f.dataset.payout}/payout`, { amount: Number(f.querySelector("input").value) })) hamkorlar(); });
+  document.addEventListener("click", async (e) => { const t = e.target.closest("[data-ptoggle]"); if (!t) return;
+    if (await act(`/api/partners/${t.dataset.ptoggle}/toggle`, { on: t.dataset.on === "1" }, "Saqlandi")) hamkorlar(); });
+  $("goalForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/goals", { metric: $("goalMetric").value, target: Number($("goalTarget").value) }, "Maqsad saqlandi")) { $("goalTarget").value = ""; boshqaruv(); } });
+  $("dryToggle").addEventListener("change", async (e) => { const on = e.target.checked; const r = await act("/api/dry-run", { on }, on ? "Sinov rejimi yoqildi — hech narsa ommaga chiqmaydi" : "Haqiqiy rejim"); if (!r) e.target.checked = !on; });
+  $("ledgerForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/ledger", { kind: $("ledKind").value, amount: Number($("ledAmount").value), currency: $("ledCur").value, note: $("ledNote").value.trim(), category: $("ledCat").value })) { $("ledAmount").value = ""; $("ledNote").value = ""; showPage("moliya"); } });
+  setInterval(() => { if (!DEMO && !document.hidden && !$("appView").hidden) loadFeeds(currentPage()); }, 8000);
+  setInterval(() => { if (!DEMO && !document.hidden && !$("appView").hidden) api("/api/overview").then((d) => { data = d; }).catch(() => {}); }, 60000);
+  // raqamlar sanab chiqiladi (faqat yangi chizilgan KPI'lar)
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function countUp(el) {
+    const txt = el.textContent, m = txt.match(/^([^\d-]*)(-?[\d\s.,]*\d)(.*)$/);
+    if (!m || reduce) return;
+    const raw = m[2].replace(/\s/g, ""), dec = (raw.split(".")[1] || "").length, target = parseFloat(raw.replace(/,/g, ""));
+    if (!isFinite(target) || target === 0) return;
+    const t0 = performance.now(), dur = 900;
+    const f = (n) => dec ? n.toFixed(dec) : fmt(Math.round(n));
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = m[1] + f(target * e) + m[3]; if (k < 1) requestAnimationFrame(step); else el.textContent = txt; };
+    requestAnimationFrame(step);
+  }
+  new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) if (n.nodeType === 1) n.querySelectorAll?.(".kpi .value").forEach(countUp); })
+    .observe(document.body, { childList: true, subtree: true });
+  load();
+})();
+</script>

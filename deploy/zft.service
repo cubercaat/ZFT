@@ -1,0 +1,21 @@
+[Unit]
+Description=ZFT — Chorraha uchun AI marketing tizimi (bot + kontent + hisobot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=zft
+WorkingDirectory=/opt/zft
+Environment=PATH=/opt/zft/.venv/bin:/usr/bin:/bin
+ExecStart=/opt/zft/.venv/bin/python -m zft run
+Restart=always
+RestartSec=10
+# xavfsizlik
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/zft/data
+
+[Install]
+WantedBy=multi-user.target

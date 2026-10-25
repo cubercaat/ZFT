@@ -1,0 +1,7 @@
+.env
+data/*.db*
+data/media/
+data/backups/
+data/*.log*
+.venv/
+__pycache__/
