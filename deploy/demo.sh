@@ -3,6 +3,7 @@
 # Birinchi marta brauzerda sozlash oynasi ochiladi: bot tokenini kiritasiz — tamom.
 set -e
 cd "$(dirname "$0")/.."
+[ -d .git ] && git pull --ff-only -q 2>/dev/null || true   # har ochilganda oxirgi versiya
 command -v ffmpeg >/dev/null || { echo "ffmpeg kerak: sudo apt install ffmpeg  (Mac: brew install ffmpeg)"; exit 1; }
 if [ -z "${CODESPACES:-}" ]; then
   [ -d .venv ] || python3 -m venv .venv
