@@ -48,3 +48,32 @@ class OwnerOnlyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OwnerOnlyStartMessage(OwnerOnlyTest):
+    def test_owner_never_sees_quiz(self):
+        for t in ("/test", "/imtihon", "/xatolar", "/start"):
+            self.app.bot.handle_update(msg(OWNER, t))
+        self.app.bot.handle_update(cb(OWNER, "quiz"))
+        joined = " ".join(self.tg.texts(OWNER))
+        self.assertNotIn("Testni boshlash uchun", joined)
+        self.assertFalse(any("a:" in str(p.get("reply_markup")) for m, p in self.tg.calls if p.get("chat_id") == OWNER))
+
+    def test_start_message_from_panel(self):
+        code, d = self.app.control.panel_action("/api/start-message", {"text": "Salom! Testlar shu yerda", "button": "Ochish", "url": "https://t.me/PRAVAQUIZ_bot"})
+        self.assertEqual(code, 200)
+        self.app.bot.handle_update(msg(900, "/start"))
+        self.assertEqual(self.tg.texts(900)[-1], "Salom! Testlar shu yerda")
+        last = [p for m, p in self.tg.calls if p.get("chat_id") == 900][-1]
+        self.assertIn("PRAVAQUIZ_bot", str(last.get("reply_markup")))
+        code, d = self.app.control.panel_action("/api/start-message", {"text": "x", "button": "B", "url": "javascript:1"})
+        self.assertEqual(code, 400)
+        code, d = self.app.control.panel_get("/api/control", {})
+        self.assertEqual(d["start_message"]["button"], "Ochish")
+
+    def test_password_command(self):
+        with mock.patch.dict(os.environ, {"PANEL_PASSWORD": "abcdefghijkl"}):
+            self.app.bot.handle_update(msg(OWNER, "/parol"))
+        self.assertIn("abcdefghijkl", self.tg.texts(OWNER)[-1])
+        self.app.bot.handle_update(msg(901, "/parol"))
+        self.assertNotIn("abcdefghijkl", " ".join(self.tg.texts(901)))

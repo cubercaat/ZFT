@@ -294,12 +294,27 @@ class Control:
             cats = [dict(r) for r in self.db.all(
                 "SELECT kind, COALESCE(category,'boshqa') category, currency, SUM(amount) s FROM ledger WHERE at>=? "
                 "GROUP BY kind, category, currency ORDER BY s DESC", (self.month()[0],))]
-            return 200, {"dry_run": self.dry_run, "goals": self.goals(), "metrics": METRICS,
+            text, btn, url = self.app.bot.start_message()
+            return 200, {"start_message": {"text": text, "button": btn, "url": url, "owner_only": self.app.settings.owner_only},
+                         "dry_run": self.dry_run, "goals": self.goals(), "metrics": METRICS,
                          "efficiency": self.efficiency(), "categories": cats,
                          "learning": self.app.learning.stats()}
         return None
 
     def panel_action(self, path: str, body: dict) -> tuple[int, dict] | None:
+        if path == "/api/start-message":
+            text = str(body.get("text", "")).strip()[:2000]
+            btn = str(body.get("button", "")).strip()[:40]
+            url = str(body.get("url", "")).strip()[:300]
+            if not text:
+                return 400, {"error": "Xabar matnini yozing"}
+            if (btn or url) and not (btn and url.startswith("https://")):
+                return 400, {"error": "Tugma uchun nom va https:// bilan boshlanadigan havola kerak"}
+            self.db.set("start_message", text)
+            self.db.set("start_button_text", btn)
+            self.db.set("start_button_url", url)
+            self.db.audit("panel", "start_message", text[:200])
+            return 200, {"ok": True, "message": "Saqlandi — endi Start bosganlarga shu boradi"}
         if path == "/api/dry-run":
             self.set_dry_run(bool(body.get("on")))
             return 200, {"ok": True, "dry_run": self.dry_run}

@@ -304,7 +304,7 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
 .share .track { flex: 1; height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
 .share .track div { height: 100%; background: linear-gradient(90deg, var(--a-media), var(--sign)); border-radius: 4px; transform-origin: left; animation: sweep 1.1s var(--ease) both; }
 form.inline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-#parForm input, #parForm select, #goalForm input, #goalForm select, #hireForm input, #hireForm select, form.inline input, form.inline select, .login input, textarea {
+#parForm input, #parForm select, #startForm input, #goalForm input, #goalForm select, #hireForm input, #hireForm select, form.inline input, form.inline select, .login input, textarea {
   padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--sunk); color: var(--ink); min-width: 0;
   transition: border-color .3s, background .3s, box-shadow .3s; }
 form.inline input, form.inline select { flex: 1 1 140px; }
@@ -655,6 +655,14 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
             <div class="card"><div class="card-head"><h2>Jarvislar samaradorligi, 7 kun</h2></div><div class="tbl" id="eff"></div></div>
           </div>
           <div class="col">
+            <div class="card"><h3>Boshqalar Start bossa</h3>
+              <p style="margin:6px 0 10px;color:var(--muted);font-size:14px">Bu bot faqat siz uchun. Boshqa odam botga kirsa, test chiqmaydi — faqat shu xabar boradi.</p>
+              <form id="startForm" style="display:grid;gap:8px">
+                <textarea id="startText" aria-label="Start xabari" style="min-height:90px"></textarea>
+                <div class="inline" style="margin:0;display:flex;gap:8px;flex-wrap:wrap"><input id="startBtn" placeholder="Tugma nomi (ixtiyoriy): Testni boshlash" aria-label="Tugma nomi" style="flex:1 1 160px">
+                <input id="startUrl" placeholder="https://t.me/PRAVAQUIZ_bot" aria-label="Tugma havolasi" style="flex:1 1 160px"></div>
+                <button class="btn primary" type="submit">Saqlash</button>
+              </form></div>
             <div class="card"><h3>Sinov rejimi</h3>
               <div class="switch"><div style="font-size:14px">Yoqilsa: video, Instagram izohi, guruh viktorinasi va ommaviy xabarlar <b>ommaga chiqmaydi</b>. Hammasi sizga «SINOV» deb keladi.</div><label class="toggle"><input type="checkbox" id="dryToggle" aria-label="Sinov rejimi"><span></span></label></div></div>
             <div class="card"><h3>Avtomatik ogohlantirishlar</h3><ul style="margin:8px 0 0;padding-left:18px;line-height:1.7;font-size:14px">
@@ -1052,7 +1060,8 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
 
   // ---------- o'quvchilar va boshqaruv ----------
   function demoControl() {
-    return { dry_run: false, metrics: { users: "Yangi foydalanuvchilar", active: "Faol foydalanuvchilar (test yechgan)", referrals: "Do'st taklifi orqali kelganlar", payments: "To'lovlar soni", revenue: "Tushum (so'm)", posts: "E'lon qilingan videolar", views: "Videolar ko'rishlari", exams: "Imtihon simulyatsiyalari" },
+    return { start_message: { text: "Assalomu alaykum! Prava nazariy imtihoniga tayyorlanish uchun: @PRAVAQUIZ_bot", button: "Testni boshlash", url: "https://t.me/PRAVAQUIZ_bot", owner_only: true },
+      dry_run: false, metrics: { users: "Yangi foydalanuvchilar", active: "Faol foydalanuvchilar (test yechgan)", referrals: "Do'st taklifi orqali kelganlar", payments: "To'lovlar soni", revenue: "Tushum (so'm)", posts: "E'lon qilingan videolar", views: "Videolar ko'rishlari", exams: "Imtihon simulyatsiyalari" },
       goals: [{ metric: "users", name: "Yangi foydalanuvchilar", target: 500, value: 212, percent: 42, forecast: 527, on_track: true }, { metric: "payments", name: "To'lovlar soni", target: 40, value: 9, percent: 22, forecast: 22, on_track: false }],
       efficiency: [["direktor", "Bosh direktor", 64, "12 topshiriq", .08], ["marketolog", "Marketolog", 31, "9 tahlil", .61], ["smm", "SMMchi", 28, "46 izohga javob", .05], ["moliya", "Moliya", 19, "7 yozuv", 0], ["media", "Media", 22, "84 o'lchov", 0], ["studiya", "Studiya", 40, "14 video (rad: 1, o'rtacha baho 7.6)", 12.4], ["nashr", "Nashr", 15, "13 e'lon", 0], ["hisobot", "Hisobotchi", 9, "8 hisobot", 0]].map(([key, name, messages, output, usd]) => ({ key, name, messages, output, usd })),
       categories: [{ kind: "expense", category: "reklama", currency: "UZS", s: 450000 }, { kind: "expense", category: "server", currency: "USD", s: 6.5 }, { kind: "income", category: "tolov", currency: "UZS", s: 891000 }],
@@ -1072,6 +1081,8 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
     const c = await get("/api/control", demoControl);
     if (!c.metrics) return;
     $("dryToggle").checked = !!c.dry_run;
+    const sm = c.start_message || {};
+    if (document.activeElement !== $("startText")) { $("startText").value = sm.text || ""; $("startBtn").value = sm.button || ""; $("startUrl").value = sm.url || ""; }
     if (!$("goalMetric").options.length) $("goalMetric").innerHTML = Object.entries(c.metrics).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join("");
     $("goals").innerHTML = c.goals.length ? c.goals.map((g) => `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:10px;font-size:14px"><span>${esc(g.name)}</span><span class="num">${fmt(g.value)} / ${fmt(g.target)} · ${g.percent}%</span></div>
       <div class="meter" style="margin-top:6px"><div style="width:${Math.min(100, g.percent)}%;background:${g.on_track ? "var(--good)" : "var(--warn)"}"></div></div><div style="font-size:12px;color:var(--muted);margin-top:4px">Oy oxiriga prognoz: ${fmt(g.forecast)} ${g.on_track ? "— maqsadga yetadi" : "— hozirgi sur'atda yetmaydi"}</div></div>`).join("")
@@ -1320,6 +1331,8 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
   document.addEventListener("click", async (e) => { const t = e.target.closest("[data-ptoggle]"); if (!t) return;
     if (await act(`/api/partners/${t.dataset.ptoggle}/toggle`, { on: t.dataset.on === "1" }, "Saqlandi")) hamkorlar(); });
   $("goalForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/goals", { metric: $("goalMetric").value, target: Number($("goalTarget").value) }, "Maqsad saqlandi")) { $("goalTarget").value = ""; boshqaruv(); } });
+  $("startForm").addEventListener("submit", async (e) => { e.preventDefault();
+    await act("/api/start-message", { text: $("startText").value.trim(), button: $("startBtn").value.trim(), url: $("startUrl").value.trim() }, "Saqlandi"); });
   $("dryToggle").addEventListener("change", async (e) => { const on = e.target.checked; const r = await act("/api/dry-run", { on }, on ? "Sinov rejimi yoqildi — hech narsa ommaga chiqmaydi" : "Haqiqiy rejim"); if (!r) e.target.checked = !on; });
   $("ledgerForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/ledger", { kind: $("ledKind").value, amount: Number($("ledAmount").value), currency: $("ledCur").value, note: $("ledNote").value.trim(), category: $("ledCat").value })) { $("ledAmount").value = ""; $("ledNote").value = ""; showPage("moliya"); } });
   setInterval(() => { if (!DEMO && !document.hidden && !$("appView").hidden) loadFeeds(currentPage()); }, 8000);

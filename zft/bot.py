@@ -92,8 +92,8 @@ class Bot:
             return self.cmd_claim(uid, arg.strip())
         if self.s.owner_only and not self.is_owner(uid):
             return self.private_notice(uid)
-        if self.s.owner_only and cmd in ("/start", "/help"):
-            return self.cmd_admin_help(uid, "")
+        if self.s.owner_only:  # shaxsiy boshqaruv boti: test/menyu yo'q, faqat boshqaruv
+            return self.owner_message(uid, cmd, arg, text)
         # foydalanuvchi bazada bo'lmasa (masalan /start bosmasdan yozsa) — qo'shib qo'yamiz
         if not self.db.user(uid):
             self.db.upsert_user(uid, frm.get("first_name", ""), frm.get("username"))
@@ -125,7 +125,13 @@ class Bot:
         if cmd == "/help":
             return self.tg.send_message(uid, "Buyruqlar: /test, /imtihon, /xatolar, /mavzu, /reja, /natija, /duel, /taklif, /reyting", self.main_menu(uid))
 
-        if self.is_owner(uid):
+        if self.is_owner(uid) and self.owner_message(uid, cmd, arg, text, fallback=False):
+            return
+        self.tg.send_message(uid, "Testni boshlash uchun pastdagi tugmani bosing 👇", self.main_menu(uid))
+
+    def owner_message(self, uid: int, cmd: str, arg: str, text: str, fallback: bool = True) -> bool:
+        """Egasining buyrug'i yoki Bosh direktorga matn. Bajarilsa True."""
+        if True:
             admin = {
                 "/admin": self.cmd_admin_help, "/stat": self.cmd_stat, "/manbalar": self.cmd_sources,
                 "/link": self.cmd_link, "/video": self.cmd_video, "/hisobot": self.cmd_report,
@@ -137,13 +143,34 @@ class Bot:
                 "/tolov": self.cmd_payment, "/maqsad": self.cmd_goal, "/samaradorlik": self.cmd_efficiency,
                 "/sinov": self.cmd_dry, "/brif": self.cmd_brief, "/oqish": self.cmd_learning_stats, "/bozor": self.cmd_market, "/strategiya": self.cmd_strategy,
             }
+            admin.update({"/parol": self.cmd_password, "/startmatn": self.cmd_start_message})
             if cmd in admin:
-                return admin[cmd](uid, arg.strip())
+                admin[cmd](uid, arg.strip())
+                return True
             if not text.startswith("/"):  # oddiy matn — Bosh direktorga
                 self.app.run_in_background(lambda: self.tg.send_message(
                     uid, "🧭 <b>Bosh direktor:</b> " + esc(self.app.hub.owner_message(text))))
-                return
-        self.tg.send_message(uid, "Testni boshlash uchun pastdagi tugmani bosing 👇", self.main_menu(uid))
+                return True
+        if fallback:
+            self.cmd_admin_help(uid, "")
+            return True
+        return False
+
+    def cmd_password(self, uid: int, _: str) -> None:
+        import os
+        pw = os.environ.get("PANEL_PASSWORD", "")
+        url = os.environ.get("PANEL_URL", "")
+        self.tg.send_message(uid, (f"🔐 Panel paroli: <code>{esc(pw)}</code>" if pw else "Panel paroli o'rnatilmagan.")
+                             + (f"\nPanel: {esc(url)}" if url else "") + "\nBu xabarni o'qigach o'chirib yuboring.")
+
+    def cmd_start_message(self, uid: int, arg: str) -> None:
+        if arg:
+            self.db.set("start_message", arg[:2000])
+            self.db.audit("owner", "start_message", arg[:200])
+            self.tg.send_message(uid, "✅ Saqlandi. Boshqalar Start bossa shu boradi:")
+            return self.private_notice(uid)
+        self.tg.send_message(uid, "Hozirgi matn (o'zgartirish: /startmatn yangi matn):")
+        self.private_notice(uid)
 
     def cmd_claim(self, uid: int, code: str) -> None:
         """Bir martalik kod bilan bot egasini belgilash (o'rnatishda server ko'rsatgan kod)."""
@@ -162,9 +189,16 @@ class Bot:
         self.tg.send_message(uid, "✅ Siz bot egasisiz. Admin buyruqlari: /admin")
         self.app.first_start()
 
-    def private_notice(self, uid: int) -> None:
+    def start_message(self) -> tuple[str, str, str]:
         pub = self.s.public_bot
-        self._safe_send(uid, "Bu shaxsiy boshqaruv boti." + (f" Prava testlari: @{pub}" if pub else ""))
+        text = self.db.get("start_message") or ("Assalomu alaykum! Prava nazariy imtihoniga tayyorlanish uchun: @" + pub
+                                                if pub else "Assalomu alaykum!")
+        return text, self.db.get("start_button_text") or "", self.db.get("start_button_url") or ""
+
+    def private_notice(self, uid: int) -> None:
+        text, btn, url = self.start_message()
+        markup = kb([[(btn, "url:" + url)]]) if btn and url.startswith("https://") else None
+        self._safe_send(uid, esc(text), markup)
 
     def cmd_start(self, frm: dict, payload: str) -> None:
         uid = frm["id"]
@@ -291,8 +325,8 @@ class Bot:
     def on_callback(self, cq: dict) -> None:
         data = cq.get("data") or ""
         uid = cq["from"]["id"]
-        if self.s.owner_only and not self.is_owner(uid):
-            return self.tg.answer_callback(cq["id"], "Shaxsiy bot")
+        if self.s.owner_only and (not self.is_owner(uid) or data[:3] not in ("ap:", "rj:", "rg:")):
+            return self.tg.answer_callback(cq["id"], "" if self.is_owner(uid) else "Shaxsiy bot")
         if data == "quiz":
             self.tg.answer_callback(cq["id"])
             return self.send_question(uid)
@@ -369,7 +403,8 @@ class Bot:
             "/hamkor Nomi | bloger | 20 — yangi hamkor; /hamkorlar — ro'yxat; /tolov @user 99000 izoh — to'lov\n"
             "/maqsad users 500 — oylik maqsad; /maqsad — progress\n"
             "/samaradorlik — Jarvislar 7 kunlik ishi; /brif — ertalabki brif hozir\n"
-            "/oqish — o'quvchilar statistikasi; /sinov on|off — sinov rejimi (hech narsa ommaga chiqmaydi)"
+            "/oqish — o'quvchilar statistikasi; /sinov on|off — sinov rejimi (hech narsa ommaga chiqmaydi)\n"
+            "/parol — panel paroli; /startmatn matn — boshqalar Start bossa yuboriladigan xabar"
         ))
 
     def cmd_partner(self, uid: int, arg: str) -> None:
