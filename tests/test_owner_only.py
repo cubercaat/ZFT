@@ -32,7 +32,7 @@ class OwnerOnlyTest(unittest.TestCase):
 
     def test_owner_gets_admin(self):
         self.app.bot.handle_update(msg(OWNER, "/start"))
-        self.assertIn("admin buyruqlari", self.tg.texts(OWNER)[-1])
+        self.assertIn("ZFT boshqaruvi", self.tg.texts(OWNER)[-1])
 
     def test_public_links_use_public_bot(self):
         self.assertIn("t.me/PRAVAQUIZ_bot?start=", self.app.bot.bot_link("ref_1"))

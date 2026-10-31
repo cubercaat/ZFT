@@ -29,6 +29,8 @@ class Bot:
         self.tg = app.tg
         self.db = app.db
         self.s = app.settings
+        from .admin_menu import AdminMenu
+        self.menu = AdminMenu(self)
 
     # ------------------------------------------------------------------ utils
     def is_owner(self, uid: int) -> bool:
@@ -130,7 +132,13 @@ class Bot:
         self.tg.send_message(uid, "Testni boshlash uchun pastdagi tugmani bosing 👇", self.main_menu(uid))
 
     def owner_message(self, uid: int, cmd: str, arg: str, text: str, fallback: bool = True) -> bool:
-        """Egasining buyrug'i yoki Bosh direktorga matn. Bajarilsa True."""
+        """Egasining buyrug'i, tugmali menyu yoki Bosh direktorga matn. Bajarilsa True."""
+        from .admin_menu import MENU_BUTTON
+        if text == MENU_BUTTON or cmd in ("/menu", "/menyu"):
+            self.menu.open(uid)
+            return True
+        if not text.startswith("/") and self.menu.take_input(uid, text):
+            return True
         if True:
             admin = {
                 "/admin": self.cmd_admin_help, "/stat": self.cmd_stat, "/manbalar": self.cmd_sources,
@@ -141,20 +149,23 @@ class Bot:
                 "/tahlil": self.cmd_review, "/ishgaol": self.cmd_hire, "/boshat": self.cmd_fire, "/buyur": self.cmd_order,
                 "/jamoa": self.cmd_team, "/hamkor": self.cmd_partner, "/hamkorlar": self.cmd_partners,
                 "/tolov": self.cmd_payment, "/maqsad": self.cmd_goal, "/samaradorlik": self.cmd_efficiency,
-                "/sinov": self.cmd_dry, "/brif": self.cmd_brief, "/oqish": self.cmd_learning_stats, "/bozor": self.cmd_market, "/strategiya": self.cmd_strategy,
+                "/sinov": self.cmd_dry, "/brif": self.cmd_brief, "/oqish": self.cmd_learning_stats, "/buyruqlar": self.cmd_commands, "/bozor": self.cmd_market, "/strategiya": self.cmd_strategy,
             }
             admin.update({"/parol": self.cmd_password, "/startmatn": self.cmd_start_message})
             if cmd in admin:
                 admin[cmd](uid, arg.strip())
                 return True
             if not text.startswith("/"):  # oddiy matn — Bosh direktorga
-                self.app.run_in_background(lambda: self.tg.send_message(
-                    uid, "🧭 <b>Bosh direktor:</b> " + esc(self.app.hub.owner_message(text))))
+                self.ask_director(uid, text)
                 return True
         if fallback:
             self.cmd_admin_help(uid, "")
             return True
         return False
+
+    def ask_director(self, uid: int, text: str) -> None:
+        self.app.run_in_background(lambda: self.tg.send_message(
+            uid, "🧭 <b>Bosh direktor:</b> " + esc(self.app.hub.owner_message(text))))
 
     def cmd_password(self, uid: int, _: str) -> None:
         import os
@@ -325,6 +336,8 @@ class Bot:
     def on_callback(self, cq: dict) -> None:
         data = cq.get("data") or ""
         uid = cq["from"]["id"]
+        if data.startswith("ad:") and self.is_owner(uid):
+            return self.menu.handle(cq)
         if self.s.owner_only and (not self.is_owner(uid) or data[:3] not in ("ap:", "rj:", "rg:")):
             return self.tg.answer_callback(cq["id"], "" if self.is_owner(uid) else "Shaxsiy bot")
         if data == "quiz":
@@ -382,6 +395,9 @@ class Bot:
 
     # ------------------------------------------------------------------ admin
     def cmd_admin_help(self, uid: int, _: str) -> None:
+        self.menu.open(uid)
+
+    def cmd_commands(self, uid: int, _: str) -> None:
         self.tg.send_message(uid, (
             "<b>ZFT — admin buyruqlari</b>\n"
             "/stat — bugungi raqamlar\n"
@@ -637,9 +653,10 @@ class Bot:
         rows = self.db.all("SELECT id, status, hook, created_at FROM posts WHERE status IN"
                            " ('pending','approved') ORDER BY id DESC LIMIT 10")
         if not rows:
-            return self.tg.send_message(uid, "Navbat bo'sh. Yangi video: /video")
-        lines = [f"#{r['id']} — {r['status']} — {esc(r['hook'])[:60]}" for r in rows]
-        self.tg.send_message(uid, "\n".join(lines))
+            return self.tg.send_message(uid, "Navbat bo'sh.", kb([[("🎬 Video yasash", "ad:do:video")]]))
+        names = {"pending": "⏳ tasdiq kutyapti", "approved": "✅ tasdiqlangan"}
+        lines = [f"#{r['id']} — {names.get(r['status'], r['status'])} — {esc(r['hook'])[:60]}" for r in rows]
+        self.tg.send_message(uid, "\n".join(lines), kb([[("📤 Tasdiqlanganini hozir e'lon qilish", "ad:pub")]]))
 
     # ------------------------------------------------------------ long poll
     def poll_forever(self, stop_event) -> None:
