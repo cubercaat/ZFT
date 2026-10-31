@@ -31,6 +31,7 @@ CARD = (30, 40, 66)
 LETTERS = "ABCDEFGHIJ"
 
 FONT_CANDIDATES_BOLD = [
+    "assets/fonts/Poppins-Bold.ttf",
     "assets/fonts/Montserrat-Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
@@ -38,6 +39,7 @@ FONT_CANDIDATES_BOLD = [
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf", "/Library/Fonts/Arial Bold.ttf",
 ]
 FONT_CANDIDATES_REG = [
+    "assets/fonts/Poppins-Medium.ttf",
     "assets/fonts/Montserrat-Medium.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/dejavu/DejaVuSans.ttf",
@@ -231,6 +233,15 @@ class VideoMaker:
 
     # ---------------------------------------------------------------- make
     def make(self, q: Question, plan: VideoPlan, out_path: Path) -> VideoResult:
+        """Asosiy format — «Chorri» bilan tez, animatsiyali video; xato bo'lsa oddiy formatga qaytadi."""
+        try:
+            from .hype import HypeMaker
+            return HypeMaker(self.root, self.bot_username, self.site, self.tts_voice).make(q, plan, out_path)
+        except Exception as exc:  # noqa: BLE001 — video baribir chiqishi kerak
+            log.warning("Hype format ishlamadi, oddiy formatga o'tildi: %s", exc)
+        return self.make_simple(q, plan, out_path)
+
+    def make_simple(self, q: Question, plan: VideoPlan, out_path: Path) -> VideoResult:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory() as tmp_s:
             tmp = Path(tmp_s)

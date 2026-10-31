@@ -75,11 +75,13 @@ class Studio:
                 t = y / H
                 dd.line([(0, y), (W, y)], fill=tuple(int(BG_TOP[i] + (BG_BOTTOM[i] - BG_TOP[i]) * t) for i in range(3)))
         d = ImageDraw.Draw(img)
-        # brend belgisi: yo'l belgisi romb
-        cx, cy, r = W // 2, 560, 120
-        d.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)], fill=ACCENT)
-        d.polygon([(cx, cy - r + 18), (cx + r - 18, cy), (cx, cy + r - 18), (cx - r + 18, cy)], outline=BG_TOP, width=8)
-        d.text((cx, cy), "C", font=_font(120, True, self.root), fill=BG_TOP, anchor="mm")
+        # brend qahramoni «Chorri» (har videoda bir xil yuz)
+        from . import mascot
+        ch = mascot.draw(420, "wink", light=2)
+        img = img.convert("RGBA")
+        img.alpha_composite(ch, (W // 2 - ch.width // 2, 150))
+        img = img.convert("RGB")
+        d = ImageDraw.Draw(img)
         d.text((W // 2, 760), "CHORRAHA", font=_font(84, True, self.root), fill=WHITE, anchor="mm")
         f, lines, size = fit_text(d, c.card_title, W - 160, 260, 70, 46, root=self.root)
         y = 880

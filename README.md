@@ -4,6 +4,12 @@
 
 **Holat:** kod tayyor. Hozir demo rejimda sinab ko'rish mumkin; doimiy ishlashi uchun server kerak (pastda «O'rnatish» — bitta buyruq).
 
+## Qahramon — «Chorri»
+
+![Chorri](assets/chorri.png)
+
+Yo'l belgisi boshli kichik robot: sariq romb, LED-ekran yuz, tepasida svetofor-antenna. Har videoda qatnashadi: test-videolarda boshlovchi (hayron bo'ladi, o'ylaydi, javobni topganda sakraydi, oxirida bot nomini ko'rsatadi), AI videolarda esa yakuniy kartada. Kod: `zft/mascot.py`, video formati: `zft/hype.py`.
+
 ## Demo — 2 daqiqada, serversiz
 
 **1-usul: brauzerda (hech narsa o'rnatmasdan).** [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/cubercaat/ZFT?quickstart=1)
