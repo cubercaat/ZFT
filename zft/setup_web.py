@@ -60,6 +60,13 @@ def configure(env_path: Path, body: dict, http=requests) -> dict:
     token = str(body.get("bot_token", "")).strip()
     username = check_token(token, http)
     values = {"BOT_TOKEN": token, "BOT_USERNAME": username}
+    if body.get("owner_only"):
+        values["OWNER_ONLY"] = "1"
+    pub = str(body.get("public_bot", "")).strip().lstrip("@")
+    if pub:
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{3,31}", pub):
+            raise ValueError("Ommaviy bot nomi noto'g'ri (masalan PRAVAQUIZ_bot).")
+        values["PUBLIC_BOT_USERNAME"] = pub
     for field, key in (("anthropic", "ANTHROPIC_API_KEY"), ("fal", "FAL_KEY")):
         v = str(body.get(field, "")).strip()
         if v:
@@ -105,6 +112,10 @@ code{font-family:ui-monospace,Menlo,monospace;background:var(--sunk);padding:2px
 <form id="f">
 <label>Telegram bot tokeni<small>@BotFather → /newbot (yoki /mybots → API Token). Token faqat shu kompyuterda saqlanadi.</small>
 <input id="bot_token" name="bot_token" required autocomplete="off" placeholder="123456789:AA..."></label>
+<label style="display:flex;gap:10px;align-items:flex-start;font-weight:500"><input type="checkbox" id="owner_only" checked style="margin-top:4px">
+<span>Bu bot faqat men uchun — ZFT bilan gaplashish va boshqarish<br><small>Boshqa odamlar yozsa, ommaviy botga yo'naltiriladi.</small></span></label>
+<label>Ommaviy bot (videolarda va havolalarda ko'rsatiladi)<small>Testlar uchun odamlar kiradigan bot.</small>
+<input id="public_bot" name="public_bot" autocomplete="off" value="PRAVAQUIZ_bot"></label>
 <details><summary>AI kalitlari (ixtiyoriy — keyin ham qo'shsa bo'ladi)</summary>
 <div style="display:grid;gap:12px;margin-top:12px">
 <label>Claude API kaliti<small>console.anthropic.com → API Keys. Bo'sh bo'lsa — shablon rejim.</small><input id="anthropic" name="anthropic" autocomplete="off"></label>
@@ -127,7 +138,7 @@ code{font-family:ui-monospace,Menlo,monospace;background:var(--sunk);padding:2px
 <script>
 const $=id=>document.getElementById(id);
 $("f").addEventListener("submit",async e=>{e.preventDefault();$("err").textContent="";$("go").disabled=true;$("go").textContent="Tekshirilmoqda…";
-try{const r=await fetch("setup",{method:"POST",headers:{"Content-Type":"application/json","X-Panel":"1"},body:JSON.stringify({bot_token:$("bot_token").value,anthropic:$("anthropic").value,fal:$("fal").value})});
+try{const r=await fetch("setup",{method:"POST",headers:{"Content-Type":"application/json","X-Panel":"1"},body:JSON.stringify({bot_token:$("bot_token").value,owner_only:$("owner_only").checked,public_bot:$("public_bot").value,anthropic:$("anthropic").value,fal:$("fal").value})});
 const j=await r.json();if(!r.ok)throw new Error(j.error||"Xato");
 $("f").hidden=true;$("done").hidden=false;$("claim").href=j.claim_link;$("bu").textContent="@"+j.bot_username;$("pw").textContent=j.password;
 $("cc").textContent="/egasi "+j.claim_code;$("ai").innerHTML=(j.ai?'<span class=ok>bor</span>':"yo'q")+" / "+(j.studio?'<span class=ok>bor</span>':"bepul rejim");}

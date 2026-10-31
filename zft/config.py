@@ -54,6 +54,8 @@ class Settings:
     # --- Telegram ---
     bot_token: str = ""
     bot_username: str = ""            # @ belgisisiz, masalan ChorrahaBot
+    owner_only: bool = False          # True: bu bot faqat egasi uchun (ZFT bilan gaplashish), boshqalarga javob bermaydi
+    public_bot: str = ""              # videolar, havolalar va CTA'da ko'rsatiladigan ommaviy bot (masalan PRAVAQUIZ_bot)
     owner_id: int = 0                 # faqat shu odam admin buyruqlarini ishlata oladi
     channel_id: str = ""              # @kanal yoki -100... ID
     group_id: str = ""                # PRAVA QUIZ guruhi ID (-100...)
@@ -108,6 +110,8 @@ class Settings:
         s = cls(
             bot_token=e("BOT_TOKEN", ""),
             bot_username=e("BOT_USERNAME", "").lstrip("@"),
+            owner_only=e("OWNER_ONLY", "0").strip().lower() in ("1", "true", "yes", "on"),
+            public_bot=e("PUBLIC_BOT_USERNAME", "").strip().lstrip("@"),
             owner_id=_int("OWNER_ID", 0),
             channel_id=e("CHANNEL_ID", ""),
             group_id=e("GROUP_ID", ""),
@@ -156,6 +160,11 @@ class Settings:
     @property
     def tiktok_enabled(self) -> bool:
         return bool(self.tiktok_access_token and self.public_media_url)
+
+    @property
+    def cta_bot(self) -> str:
+        """Odamlarga ko'rsatiladigan bot: ommaviy bot (agar berilgan bo'lsa), aks holda shu bot."""
+        return self.public_bot or self.bot_username
 
     @property
     def studio_enabled(self) -> bool:

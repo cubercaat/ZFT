@@ -46,12 +46,12 @@ class App:
         self.bank = QuestionBank(s.questions_path)
         self.brain = Brain(self.db, s.anthropic_api_key, s.ai_model, s.ai_monthly_budget_usd,
                            s.ai_web_search, s.ai_web_search_type, s.timezone_offset_hours)
-        self.video = VideoMaker(ROOT, bot_username=s.bot_username, site=s.site_url, tts_voice=s.tts_voice)
-        self.studio = Studio(ROOT, s.bot_username, s.site_url, s.tts_voice)
+        self.video = VideoMaker(ROOT, bot_username=s.cta_bot, site=s.site_url, tts_voice=s.tts_voice)
+        self.studio = Studio(ROOT, s.cta_bot, s.site_url, s.tts_voice)
         self.fal = FalClient(s.fal_key)
         self.director = Director(self.brain, s.director_model)
         self._ig_override = self._tt_override = None
-        self.channel = TelegramChannelPublisher(self.tg, s.channel_id, s.bot_username)
+        self.channel = TelegramChannelPublisher(self.tg, s.channel_id, s.cta_bot)
         self.ref_goal = int(os.environ.get("REF_GOAL", "3"))
         self.ref_reward_text = os.environ.get(
             "REF_REWARD_TEXT", "3 ta do'st taklif qilganlar haftalik reytingda alohida e'lon qilinadi")

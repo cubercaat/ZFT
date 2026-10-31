@@ -35,7 +35,7 @@ class Bot:
         return bool(self.s.owner_id) and uid == self.s.owner_id
 
     def bot_link(self, payload: str) -> str:
-        return f"https://t.me/{self.s.bot_username}?start={payload}"
+        return f"https://t.me/{self.s.cta_bot}?start={payload}"
 
     def site_link(self, source: str) -> str:
         sep = "&" if "?" in self.s.site_url else "?"
@@ -86,10 +86,14 @@ class Bot:
         cmd, _, arg = text.partition(" ")
         cmd = cmd.split("@")[0].lower()
 
-        if cmd == "/start":
+        if cmd == "/start" and not (self.s.owner_only and self.is_owner(uid)):
             return self.cmd_start(frm, arg.strip())
         if cmd == "/egasi":
             return self.cmd_claim(uid, arg.strip())
+        if self.s.owner_only and not self.is_owner(uid):
+            return self.private_notice(uid)
+        if self.s.owner_only and cmd in ("/start", "/help"):
+            return self.cmd_admin_help(uid, "")
         # foydalanuvchi bazada bo'lmasa (masalan /start bosmasdan yozsa) — qo'shib qo'yamiz
         if not self.db.user(uid):
             self.db.upsert_user(uid, frm.get("first_name", ""), frm.get("username"))
@@ -158,11 +162,17 @@ class Bot:
         self.tg.send_message(uid, "✅ Siz bot egasisiz. Admin buyruqlari: /admin")
         self.app.first_start()
 
+    def private_notice(self, uid: int) -> None:
+        pub = self.s.public_bot
+        self._safe_send(uid, "Bu shaxsiy boshqaruv boti." + (f" Prava testlari: @{pub}" if pub else ""))
+
     def cmd_start(self, frm: dict, payload: str) -> None:
         uid = frm["id"]
         source, referrer = "direct", None
         if payload.startswith("egasi_"):  # sozlash oynasidagi "botni ochish" havolasi
             return self.cmd_claim(uid, payload[6:])
+        if self.s.owner_only:
+            return self.private_notice(uid)
         duel_id = None
         if payload and PAYLOAD_RE.match(payload) and payload.startswith("duel_") and payload[5:].isdigit():
             duel_id = int(payload[5:])
@@ -281,6 +291,8 @@ class Bot:
     def on_callback(self, cq: dict) -> None:
         data = cq.get("data") or ""
         uid = cq["from"]["id"]
+        if self.s.owner_only and not self.is_owner(uid):
+            return self.tg.answer_callback(cq["id"], "Shaxsiy bot")
         if data == "quiz":
             self.tg.answer_callback(cq["id"])
             return self.send_question(uid)

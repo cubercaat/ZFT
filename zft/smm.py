@@ -78,7 +78,7 @@ class SmmAuto:
         return bool(getattr(self.app, "dry_run", False))
 
     def bot_handle(self) -> str:
-        return "@" + self.app.settings.bot_username
+        return "@" + self.app.settings.cta_bot
 
     # ------------------------------------------------------------ izohlar
     def classify(self, text: str) -> str:
