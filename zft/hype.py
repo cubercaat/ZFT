@@ -98,17 +98,47 @@ class HypeMaker:
         return img
 
     # ---------------------------------------------------------------- audio
-    def _tts(self, text: str, out: Path) -> float | None:
+    # hissiyot → ovoz tezligi, balandligi va kuchi (edge-tts prosody)
+    MOODS = {
+        "hype": ("+18%", "+14Hz", "+15%"),     # hook: hayajon, shoshib
+        "calm": ("+6%", "+4Hz", "+0%"),        # savol: aniq, tushunarli
+        "tense": ("+12%", "+2Hz", "+5%"),
+        "happy": ("+14%", "+22Hz", "+15%"),    # to'g'ri javob: quvonch
+        "cta": ("+10%", "+10Hz", "+10%"),      # chaqiriq: do'stona, ishonchli
+    }
+
+    def _tts(self, text: str, out: Path, mood: str = "calm") -> float | None:
         exe = shutil.which("edge-tts")
         if not exe or not text.strip():
             return None
+        rate, pitch, vol = self.MOODS.get(mood, self.MOODS["calm"])
+        raw = out.with_suffix(".raw.mp3")
         try:
-            subprocess.run([exe, "--voice", self.tts_voice, "--rate=+12%", "--text", text, "--write-media", str(out)],
-                           check=True, capture_output=True, timeout=90)
-            return probe_duration(out)
+            subprocess.run([exe, "--voice", self.tts_voice, f"--rate={rate}", f"--pitch={pitch}", f"--volume={vol}",
+                            "--text", text, "--write-media", str(raw)], check=True, capture_output=True, timeout=90)
         except (subprocess.SubprocessError, OSError) as exc:
             log.warning("TTS ishlamadi: %s", exc)
             return None
+        return self._voice_fx(raw, out, mood)
+
+    def _voice_fx(self, raw: Path, out: Path, mood: str) -> float | None:
+        """Chorri ovozi: biroz yuqori va jarangli (tezlik o'zgarmaydi), siqilgan, aniq; VOICE_FX=none — o'chiradi."""
+        import os
+        fx = os.environ.get("VOICE_FX", "chorri")
+        if fx == "none":
+            shutil.copy(raw, out)
+            return probe_duration(out)
+        lift = 1.08 if mood in ("hype", "happy") else 1.05
+        chain = (f"aresample=44100,asetrate={int(44100 * lift)},aresample=44100,atempo={1 / lift:.4f},"
+                 "highpass=f=90,equalizer=f=3200:t=q:w=1.2:g=4,"
+                 "aecho=0.85:0.5:9:0.18,acompressor=threshold=-18dB:ratio=3:attack=5:release=60,"
+                 "loudnorm=I=-15:TP=-1.5:LRA=7")
+        try:
+            run_ffmpeg(["ffmpeg", "-y", "-i", str(raw), "-af", chain, "-ar", "44100", "-ac", "2", str(out)])
+        except RuntimeError as exc:
+            log.warning("Ovoz effekti ishlamadi: %s", exc)
+            shutil.copy(raw, out)
+        return probe_duration(out)
 
     def _sfx(self, tmp: Path) -> dict[str, Path]:
         specs = {
@@ -138,7 +168,7 @@ class HypeMaker:
             idx += 1
         for t, path in voice:
             inputs += ["-i", str(path)]
-            filt.append(f"[{idx}:a]aresample=44100,volume=1.6,adelay={int(t * 1000)}|{int(t * 1000)}[v{idx}]")
+            filt.append(f"[{idx}:a]aresample=44100,volume=1.2,adelay={int(t * 1000)}|{int(t * 1000)}[v{idx}]")
             labels.append(f"[v{idx}]")
             idx += 1
         for t, name in events:
@@ -213,16 +243,18 @@ class HypeMaker:
         rng = random.Random(q.id)
         with tempfile.TemporaryDirectory() as tmp_s:
             tmp = Path(tmp_s)
-            v_hook = self._tts(plan.hook, tmp / "v_hook.mp3")
-            v_q = self._tts(q.question, tmp / "v_q.mp3")
+            v_hook = self._tts(plan.hook, tmp / "v_hook.mp3", "hype")
+            v_q = self._tts(q.question, tmp / "v_q.mp3", "calm")
             has_voice = v_hook is not None and v_q is not None
+            v_rev = self._tts(f"To'g'ri javob — {LETTERS[q.correct]}! {q.correct_text}.", tmp / "v_rev.mp3", "happy") if has_voice else None
+            v_cta = self._tts(plan.cta, tmp / "v_cta.mp3", "cta") if has_voice else None
 
             hook_d = max(2.4, (v_hook or 0) + 0.3)
             read_d = max(3.2, (v_q or 0) + 0.4)
             count_n = 3
             q_d = read_d + count_n
-            rev_d = 3.4
-            cta_d = 2.8
+            rev_d = max(3.4, (v_rev or 0) + 0.9)
+            cta_d = max(2.8, (v_cta or 0) + 0.8)
             t_q, t_rev = hook_d, hook_d + q_d
             t_cta = t_rev + rev_d
             total = t_cta + cta_d
@@ -304,6 +336,10 @@ class HypeMaker:
             voice = []
             if has_voice:
                 voice = [(0.35, tmp / "v_hook.mp3"), (t_q + 0.3, tmp / "v_q.mp3")]
+                if v_rev:
+                    voice.append((t_rev + 0.35, tmp / "v_rev.mp3"))
+                if v_cta:
+                    voice.append((t_cta + 0.3, tmp / "v_cta.mp3"))
             audio = self._audio(tmp, total, events, voice)
 
             proc = subprocess.Popen(
@@ -346,7 +382,7 @@ class HypeMaker:
                             if p > 0:
                                 self._paste_scaled(fr, c, W / 2, ys[i], 0.6 + 0.4 * ease_out_back(p), clamp01(p * 1.8))
                         talking = has_voice and 0.3 < lt < read_d
-                        expr = "talk" if talking else "think"
+                        expr = "talk" if talking else ("oops" if cd_t > count_n - 1 else "think")
                         mouth = int(1 + 3 * abs(math.sin(t * 15))) if talking else 0
                         ch = self.chorri(300, expr, mouth, blink, light)
                         cy_ch = max(stage_bottom + 230, H - 300)
@@ -380,7 +416,9 @@ class HypeMaker:
                         if expl_layer is not None:
                             self._paste_scaled(fr, expl_layer, W / 2, stage_bottom + 70 + ans_layer.height / 2 + expl_layer.height / 2 + 10,
                                                1.0, clamp01((lt - 0.4) / 0.4))
-                        ch = self.chorri(300, "happy", 0, 0, 2)
+                        speaking = v_rev is not None and 0.35 < lt < 0.35 + v_rev
+                        ch = self.chorri(300, "star" if lt < 0.9 else "happy",
+                                         int(1 + 3 * abs(math.sin(t * 15))) if speaking and lt >= 0.9 else 0, 0, 2)
                         jump = abs(math.sin(lt * 7)) * 40 * max(0, 1 - lt / 2)
                         self._paste_scaled(fr, ch, 210, max(stage_bottom + 230, H - 300) - jump, 1.0)
                         cd = ImageDraw.Draw(fr)
@@ -394,8 +432,9 @@ class HypeMaker:
                     else:  # 4) CHAQIRIQ
                         lt = t - t_cta
                         s = ease_out_back(lt / 0.5)
-                        expr = "wink" if lt < 1.2 else "cool"
-                        ch = self.chorri(620, expr, 0, blink, light)
+                        expr = "wink" if lt < 1.1 else "love"
+                        cta_talk = v_cta is not None and 0.3 < lt < 0.3 + v_cta
+                        ch = self.chorri(620, expr, int(1 + 3 * abs(math.sin(t * 15))) if cta_talk else 0, blink, light)
                         self._paste_scaled(fr, ch, W / 2, 760 + math.sin(t * 4) * 10, s, 1.0, math.sin(lt * 6) * 4 * max(0, 1 - lt))
                         self._paste_scaled(fr, cta_layer, W / 2, 1300, 1.0 + 0.4 * (1 - ease_out(lt / 0.3)), clamp01(lt / 0.25))
                         ps = ease_out_back((lt - 0.35) / 0.4) * (1 + 0.04 * math.sin(lt * 8))

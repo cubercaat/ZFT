@@ -295,13 +295,37 @@ class Control:
                 "SELECT kind, COALESCE(category,'boshqa') category, currency, SUM(amount) s FROM ledger WHERE at>=? "
                 "GROUP BY kind, category, currency ORDER BY s DESC", (self.month()[0],))]
             text, btn, url = self.app.bot.start_message()
-            return 200, {"start_message": {"text": text, "button": btn, "url": url, "owner_only": self.app.settings.owner_only},
+            keys = {"fal": bool(self.app.fal.enabled), "anthropic": bool(self.app.brain.api_key)}
+            return 200, {"keys": keys, "start_message": {"text": text, "button": btn, "url": url, "owner_only": self.app.settings.owner_only},
                          "dry_run": self.dry_run, "goals": self.goals(), "metrics": METRICS,
                          "efficiency": self.efficiency(), "categories": cats,
                          "learning": self.app.learning.stats()}
         return None
 
     def panel_action(self, path: str, body: dict) -> tuple[int, dict] | None:
+        if path == "/api/keys":
+            from .config import ROOT
+            from .setup_web import set_env_values
+            vals = {}
+            fal = str(body.get("fal", "")).strip()
+            ant = str(body.get("anthropic", "")).strip()
+            for v, key in ((fal, "FAL_KEY"), (ant, "ANTHROPIC_API_KEY")):
+                if v:
+                    if len(v) < 20 or any(c.isspace() for c in v):
+                        return 400, {"error": f"{key} noto'g'ri ko'rinyapti"}
+                    vals[key] = v
+            if not vals:
+                return 400, {"error": "Kamida bitta kalitni kiriting"}
+            set_env_values(ROOT / ".env", vals)
+            s = self.app.settings
+            if fal:
+                s.fal_key = fal
+                self.app.fal.key = fal
+            if ant:
+                s.anthropic_api_key = ant
+                self.app.brain.api_key = ant
+            self.db.audit("panel", "keys_updated", sorted(vals))
+            return 200, {"ok": True, "message": "Saqlandi va darhol ishga tushdi"}
         if path == "/api/start-message":
             text = str(body.get("text", "")).strip()[:2000]
             btn = str(body.get("button", "")).strip()[:40]

@@ -304,7 +304,7 @@ td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
 .share .track { flex: 1; height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; }
 .share .track div { height: 100%; background: linear-gradient(90deg, var(--a-media), var(--sign)); border-radius: 4px; transform-origin: left; animation: sweep 1.1s var(--ease) both; }
 form.inline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-#parForm input, #parForm select, #startForm input, #goalForm input, #goalForm select, #hireForm input, #hireForm select, form.inline input, form.inline select, .login input, textarea {
+#parForm input, #parForm select, #startForm input, #keyForm input, #goalForm input, #goalForm select, #hireForm input, #hireForm select, form.inline input, form.inline select, .login input, textarea {
   padding: 10px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--sunk); color: var(--ink); min-width: 0;
   transition: border-color .3s, background .3s, box-shadow .3s; }
 form.inline input, form.inline select { flex: 1 1 140px; }
@@ -655,6 +655,14 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
             <div class="card"><div class="card-head"><h2>Jarvislar samaradorligi, 7 kun</h2></div><div class="tbl" id="eff"></div></div>
           </div>
           <div class="col">
+            <div class="card"><h3>AI kalitlari</h3>
+              <p style="margin:6px 0 10px;color:var(--muted);font-size:14px">Kalitlar faqat serverdagi .env faylida saqlanadi va bu yerda qayta ko'rsatilmaydi.</p>
+              <div class="rows" id="keyState" style="margin-bottom:8px"></div>
+              <form id="keyForm" style="display:grid;gap:8px">
+                <input id="keyFal" type="password" autocomplete="off" placeholder="fal.ai kaliti (AI video va AI yuz)" aria-label="fal.ai kaliti">
+                <input id="keyAnt" type="password" autocomplete="off" placeholder="Claude API kaliti (AI matn)" aria-label="Claude API kaliti">
+                <button class="btn primary" type="submit">Saqlash</button>
+              </form></div>
             <div class="card"><h3>Boshqalar Start bossa</h3>
               <p style="margin:6px 0 10px;color:var(--muted);font-size:14px">Bu bot faqat siz uchun. Boshqa odam botga kirsa, test chiqmaydi — faqat shu xabar boradi.</p>
               <form id="startForm" style="display:grid;gap:8px">
@@ -1081,6 +1089,9 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
     const c = await get("/api/control", demoControl);
     if (!c.metrics) return;
     $("dryToggle").checked = !!c.dry_run;
+    const ks = c.keys || {};
+    $("keyState").innerHTML = [["fal.ai (AI video, AI yuz)", ks.fal], ["Claude (AI matn)", ks.anthropic]]
+      .map(([n, on]) => `<div class="row"><span>${n}</span><span><span class="dot ${on ? "good" : ""}" style="display:inline-block;margin-right:6px"></span>${on ? "ulangan" : "yo'q"}</span></div>`).join("");
     const sm = c.start_message || {};
     if (document.activeElement !== $("startText")) { $("startText").value = sm.text || ""; $("startBtn").value = sm.button || ""; $("startUrl").value = sm.url || ""; }
     if (!$("goalMetric").options.length) $("goalMetric").innerHTML = Object.entries(c.metrics).map(([k, v]) => `<option value="${esc(k)}">${esc(v)}</option>`).join("");
@@ -1331,6 +1342,8 @@ details.rep pre { white-space: pre-wrap; font-family: var(--font-body); font-siz
   document.addEventListener("click", async (e) => { const t = e.target.closest("[data-ptoggle]"); if (!t) return;
     if (await act(`/api/partners/${t.dataset.ptoggle}/toggle`, { on: t.dataset.on === "1" }, "Saqlandi")) hamkorlar(); });
   $("goalForm").addEventListener("submit", async (e) => { e.preventDefault(); if (await act("/api/goals", { metric: $("goalMetric").value, target: Number($("goalTarget").value) }, "Maqsad saqlandi")) { $("goalTarget").value = ""; boshqaruv(); } });
+  $("keyForm").addEventListener("submit", async (e) => { e.preventDefault();
+    if (await act("/api/keys", { fal: $("keyFal").value.trim(), anthropic: $("keyAnt").value.trim() }, "Saqlandi")) { $("keyFal").value = ""; $("keyAnt").value = ""; boshqaruv(); } });
   $("startForm").addEventListener("submit", async (e) => { e.preventDefault();
     await act("/api/start-message", { text: $("startText").value.trim(), button: $("startBtn").value.trim(), url: $("startUrl").value.trim() }, "Saqlandi"); });
   $("dryToggle").addEventListener("change", async (e) => { const on = e.target.checked; const r = await act("/api/dry-run", { on }, on ? "Sinov rejimi yoqildi — hech narsa ommaga chiqmaydi" : "Haqiqiy rejim"); if (!r) e.target.checked = !on; });
